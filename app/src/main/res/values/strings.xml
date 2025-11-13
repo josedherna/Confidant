@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">Confidant</string>
+
+    <string name="nav_1">Entries</string>
+    <string name="nav_2">Stats</string>
+    <string name="nav_3">Settings</string>
+
 </resources>

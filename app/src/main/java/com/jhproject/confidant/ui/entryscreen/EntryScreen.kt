@@ -1,7 +1,6 @@
 package com.jhproject.confidant.ui.entryscreen
 
-import androidx.compose.foundation.background
-
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,41 +13,59 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.Surface
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 @Preview
 @Composable
-fun EntryScreen(modifier: Modifier = Modifier) {
-    LazyColumn(
+fun EntryScreen(
+    entryViewModel: EntryScreenViewModel = viewModel(),
+    darkTheme: Boolean = isSystemInDarkTheme()
+) {
+    val backgroundTheme = if (darkTheme) {
+        MaterialTheme.colorScheme.surfaceContainerLowest
+    }
+    else {
+        MaterialTheme.colorScheme.surfaceColorAtElevation(5.dp)
+    }
+
+    Surface(
+        color = backgroundTheme,
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
     ) {
+        LazyColumn(
+            modifier = Modifier
+        ) {
 
+        }
     }
 }
 
 @Preview
 @Composable
 fun EntryFAB() {
-    FloatingActionButton(onClick = { /*TODO*/ },
-        modifier = Modifier.windowInsetsPadding(WindowInsets.safeDrawing.only(
-            WindowInsetsSides.Horizontal))) {
-        Icon(imageVector = Icons.Default.Add, contentDescription = "add")
+    FloatingActionButton(
+        onClick = { /*TODO*/ },
+        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+        contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+        modifier = Modifier
+            .windowInsetsPadding(
+                WindowInsets.safeDrawing.only(
+            WindowInsetsSides.Horizontal
+                )
+            )
+    ) {
+        Icon(
+            imageVector = Icons.Default.Add,
+            contentDescription = "add"
+        )
     }
-}
-
-@Preview
-@Composable
-fun MonthLabel() {
-    Text("",
-        fontSize = 30.sp,
-        fontWeight = FontWeight.Bold)
 }
 
 @Composable
