@@ -15,4 +15,5 @@ class MainScreenViewModel : ViewModel() {
     val formattedCurrentDate: String = currentDate.format(formatter)
 
     var selectedDate: String by mutableStateOf(formattedCurrentDate)
+
 }

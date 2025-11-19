@@ -5,4 +5,12 @@
     <string name="nav_2">Stats</string>
     <string name="nav_3">Settings</string>
 
+    <string name="search_desc">Search</string>
+    <string name="month_seek">Scroll</string>
+
+    <string name="add_today">Create Today\'s Entry</string>
+    <string name="add_other">Create Past Entry</string>
+    <string name="add_important">Add New Important Day</string>
+
+
 </resources>

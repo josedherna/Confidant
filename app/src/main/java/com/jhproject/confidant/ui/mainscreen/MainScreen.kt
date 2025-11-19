@@ -11,20 +11,19 @@ import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledIconButton
+import androidx.compose.material3.FloatingActionButtonMenu
+import androidx.compose.material3.FloatingActionButtonMenuItem
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -32,16 +31,21 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.OutlinedIconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.ToggleFloatingActionButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -56,12 +60,11 @@ import com.jhproject.confidant.ui.entryscreen.EntryScreen
 import com.jhproject.confidant.ui.settingscreen.SettingScreen
 import com.jhproject.confidant.ui.statscreen.StatScreen
 import com.jhproject.confidant.R
-import com.jhproject.confidant.ui.entryscreen.EntryFAB
 
 @Preview
 @Composable
 fun MainScreen() {
-    val navController = rememberNavController()
+    val navbarController = rememberNavController()
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -72,11 +75,11 @@ fun MainScreen() {
             EntryFAB()
         },
         bottomBar = {
-            BottomNavBar(navController)
+            BottomNavBar(navbarController)
         },
     ) { paddingValues ->
         NavHost(
-            navController = navController,
+            navController = navbarController,
             startDestination = PrimaryAppScreen.ENTRIES.route,
             modifier = Modifier
                 .fillMaxSize()
@@ -99,6 +102,12 @@ enum class PrimaryAppScreen(val route: String, val title: Int, val icon: Int, va
     ENTRIES("entry_screen", R.string.nav_1, R.drawable.book_24px, R.drawable.book_filled_24px),
     STATS("stat_screen", R.string.nav_2, R.drawable.chart_data_24px, R.drawable.chart_data_filled_24px),
     SETTINGS("setting_screen", R.string.nav_3, R.drawable.settings_24px, R.drawable.settings_filled_24px)
+}
+
+enum class FabActions(val icon: Int, val label: Int) {
+    ADD_TODAY_ENTRY(R.drawable.edit_24px, R.string.add_today),
+    ADD_OTHER_ENTRY(R.drawable.otherday_24px, R.string.add_other),
+    ADD_IMPORTANT_DAY(R.drawable.stars_24px, R.string.add_important)
 }
 
 @Preview
@@ -131,7 +140,7 @@ fun MonthIconButton(icon: ImageVector) {
         modifier = Modifier.size(32.dp),
     ) {
         Icon(
-            imageVector = icon, contentDescription = "Scroll"
+            imageVector = icon, contentDescription = stringResource(R.string.month_seek)
         )
     }
 }
@@ -152,8 +161,8 @@ fun SearchButton() {
         )
     ) {
         Icon(
-            Icons.Default.Search,
-            contentDescription = "Search"
+            imageVector = ImageVector.vectorResource(R.drawable.search_24px),
+            contentDescription = stringResource(R.string.search_desc)
         )
     }
 }
@@ -172,7 +181,7 @@ fun DateTopBar(
         MaterialTheme.colorScheme.surfaceColorAtElevation(5.dp)
     }
     CenterAlignedTopAppBar(
-        colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+        colors = TopAppBarDefaults.topAppBarColors(
             containerColor = backgroundTheme
         ),
         title = {
@@ -180,15 +189,66 @@ fun DateTopBar(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(5.dp),
             ) {
-                MonthIconButton(Icons.AutoMirrored.Filled.ArrowBack)
+                MonthIconButton(ImageVector.vectorResource(R.drawable.arrow_back_24px))
                 MonthLabel(dateViewModel.selectedDate)
-                MonthIconButton(Icons.AutoMirrored.Filled.ArrowForward)
+                MonthIconButton(ImageVector.vectorResource(R.drawable.arrow_forward_24px))
             }
         },
         actions = {
             SearchButton()
         }
     )
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+fun EntryFAB() {
+    var fabExpanded by rememberSaveable { mutableStateOf(false) }
+    val containerColor = if (fabExpanded) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.tertiaryContainer
+
+    FloatingActionButtonMenu(
+        expanded = fabExpanded,
+        button = {
+            ToggleFloatingActionButton(
+                checked = fabExpanded,
+                onCheckedChange = {
+                    fabExpanded = it
+                },
+                containerColor = { containerColor },
+            ) {
+                Icon(
+                    imageVector = ImageVector.vectorResource(
+                        if (fabExpanded) R.drawable.close_24px else R.drawable.add_24px),
+                    contentDescription = "create",
+                    tint = if (fabExpanded) MaterialTheme.colorScheme.onTertiary else MaterialTheme.colorScheme.onTertiaryContainer
+                )
+            }
+        },
+        Modifier
+            .offset(x = ((16).dp), y = ((16).dp))
+    ) {
+        FabActions.entries.forEach { actions ->
+            FloatingActionButtonMenuItem(
+                onClick = {
+                    fabExpanded = false
+                },
+                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                icon = {
+                    Icon(
+                        painter = painterResource(actions.icon),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onTertiaryContainer
+                    )
+                },
+                text = {
+                    Text(
+                        text = stringResource(actions.label),
+                        color = MaterialTheme.colorScheme.onTertiaryContainer
+                    )
+                }
+            )
+        }
+    }
 }
 
 @Composable
