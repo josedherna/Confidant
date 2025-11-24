@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
-import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
@@ -68,6 +67,7 @@ fun MainScreen() {
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
+        contentWindowInsets = WindowInsets(0),
         topBar = {
             DateTopBar()
         },
@@ -83,7 +83,7 @@ fun MainScreen() {
             startDestination = PrimaryAppScreen.ENTRIES.route,
             modifier = Modifier
                 .fillMaxSize()
-                .consumeWindowInsets(paddingValues),
+                .padding(paddingValues)
         ) {
             composable(PrimaryAppScreen.ENTRIES.route) {
                 EntryScreen()
@@ -219,13 +219,18 @@ fun EntryFAB() {
                 Icon(
                     imageVector = ImageVector.vectorResource(
                         if (fabExpanded) R.drawable.close_24px else R.drawable.add_24px),
-                    contentDescription = "create",
+                    contentDescription = stringResource(R.string.create_fab),
                     tint = if (fabExpanded) MaterialTheme.colorScheme.onTertiary else MaterialTheme.colorScheme.onTertiaryContainer
                 )
             }
         },
         Modifier
             .offset(x = ((16).dp), y = ((16).dp))
+            .windowInsetsPadding(
+                WindowInsets.safeDrawing.only(
+                    WindowInsetsSides.Horizontal
+                )
+            )
     ) {
         FabActions.entries.forEach { actions ->
             FloatingActionButtonMenuItem(

@@ -8,9 +8,19 @@
     <string name="search_desc">Search</string>
     <string name="month_seek">Scroll</string>
 
+    <string name="create_fab">Create</string>
     <string name="add_today">Create Today\'s Entry</string>
     <string name="add_other">Create Past Entry</string>
     <string name="add_important">Add New Important Day</string>
 
+    <string name="great">Great</string>
+    <string name="good">Good</string>
+    <string name="meh">Meh</string>
+    <string name="bad">Bad</string>
+    <string name="awful">Awful</string>
 
+    <string name="edit">Edit</string>
+    <string name="delete">Delete</string>
+
+    <string name="edit_description">Edit this entry</string>
 </resources>
