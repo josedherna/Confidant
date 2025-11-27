@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
@@ -26,6 +25,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarDefaults
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.OutlinedIconButton
 import androidx.compose.material3.Scaffold
@@ -41,8 +41,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
@@ -50,7 +48,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -60,10 +57,29 @@ import com.jhproject.confidant.ui.settingscreen.SettingScreen
 import com.jhproject.confidant.ui.statscreen.StatScreen
 import com.jhproject.confidant.R
 
+enum class PrimaryAppScreen(val route: String, val title: Int, val icon: Int, val filledIcon: Int) {
+    ENTRIES("entry_screen", R.string.nav_1, R.drawable.book_24px, R.drawable.book_filled_24px),
+    STATS("stat_screen", R.string.nav_2, R.drawable.chart_data_24px, R.drawable.chart_data_filled_24px),
+    SETTINGS("setting_screen", R.string.nav_3, R.drawable.settings_24px, R.drawable.settings_filled_24px)
+}
+
+enum class FabActions(val icon: Int, val label: Int) {
+    ADD_TODAY_ENTRY(R.drawable.edit_24px, R.string.add_today),
+    ADD_OTHER_ENTRY(R.drawable.otherday_24px, R.string.add_other),
+    ADD_IMPORTANT_DAY(R.drawable.stars_24px, R.string.add_important)
+}
+
+private val destinations = PrimaryAppScreen.entries
+
 @Preview
 @Composable
 fun MainScreen() {
     val navbarController = rememberNavController()
+
+    val navBackStackEntry by navbarController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route ?: destinations.first().route
+
+    val selectedDestinationIndex = destinations.indexOfFirst { it.route == currentRoute }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -75,7 +91,43 @@ fun MainScreen() {
             EntryFAB()
         },
         bottomBar = {
-            BottomNavBar(navbarController)
+            NavigationBar(
+                windowInsets = NavigationBarDefaults.windowInsets,
+            ) {
+                destinations.forEachIndexed { index, screen ->
+                    val isSelected = selectedDestinationIndex == index
+                    val iconId = if (isSelected) screen.filledIcon else screen.icon
+
+                    NavigationBarItem(
+                        // Use the derived index for 'selected'
+                        selected = isSelected,
+                        onClick = {
+                            if (!isSelected) {
+                                navbarController.navigate(screen.route)
+                                {
+                                    popUpTo(navbarController.graph.startDestinationId) {
+                                        //Saves state of the previous screen
+                                        saveState = true
+                                    }
+                                    //Avoids creating multiple copies of the same destination on the stack
+                                    launchSingleTop = true
+                                    //Restores state when re-selecting a previously selected item
+                                    restoreState = true
+                                }
+                            }
+                        },
+                        icon = {
+                            Icon(
+                                imageVector = ImageVector.vectorResource(iconId),
+                                contentDescription = stringResource(screen.title)
+                            )
+                        },
+                        label = {
+                            Text(stringResource(screen.title))
+                        }
+                    )
+                }
+            }
         },
     ) { paddingValues ->
         NavHost(
@@ -96,18 +148,6 @@ fun MainScreen() {
             }
         }
     }
-}
-
-enum class PrimaryAppScreen(val route: String, val title: Int, val icon: Int, val filledIcon: Int) {
-    ENTRIES("entry_screen", R.string.nav_1, R.drawable.book_24px, R.drawable.book_filled_24px),
-    STATS("stat_screen", R.string.nav_2, R.drawable.chart_data_24px, R.drawable.chart_data_filled_24px),
-    SETTINGS("setting_screen", R.string.nav_3, R.drawable.settings_24px, R.drawable.settings_filled_24px)
-}
-
-enum class FabActions(val icon: Int, val label: Int) {
-    ADD_TODAY_ENTRY(R.drawable.edit_24px, R.string.add_today),
-    ADD_OTHER_ENTRY(R.drawable.otherday_24px, R.string.add_other),
-    ADD_IMPORTANT_DAY(R.drawable.stars_24px, R.string.add_important)
 }
 
 @Preview
@@ -240,7 +280,7 @@ fun EntryFAB() {
                 containerColor = MaterialTheme.colorScheme.tertiaryContainer,
                 icon = {
                     Icon(
-                        painter = painterResource(actions.icon),
+                        imageVector = ImageVector.vectorResource(actions.icon),
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.onTertiaryContainer
                     )
@@ -251,42 +291,6 @@ fun EntryFAB() {
                         color = MaterialTheme.colorScheme.onTertiaryContainer
                     )
                 }
-            )
-        }
-    }
-}
-
-@Composable
-fun BottomNavBar(
-    navController: NavController
-) {
-    val backStackEntry by navController.currentBackStackEntryAsState()
-    val currentRoute = backStackEntry?.destination?.route
-
-    NavigationBar(
-        windowInsets = WindowInsets(0, 0, 0, 0),
-    ) {
-        PrimaryAppScreen.entries.forEach { item ->
-            LocalContext.current
-            NavigationBarItem(
-                selected = currentRoute?.endsWith(item.route) == true,
-                onClick = {
-                    navController.navigate(item.route) {
-                        popUpTo(navController.graph.startDestinationId)
-                    }
-                },
-                icon = {
-                    Icon(
-                        painter = if (currentRoute == item.route) painterResource(item.filledIcon) else painterResource(item.icon),
-                        contentDescription = stringResource(item.title))
-                },
-                label = {
-                    Text(stringResource(item.title))
-                },
-                modifier = Modifier
-                    .windowInsetsPadding(
-                        WindowInsets.navigationBars
-                    )
             )
         }
     }

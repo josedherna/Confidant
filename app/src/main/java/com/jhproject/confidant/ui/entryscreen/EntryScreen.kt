@@ -1,7 +1,7 @@
 package com.jhproject.confidant.ui.entryscreen
 
+import android.content.res.Configuration
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
@@ -35,15 +35,16 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.buildAnnotatedString
@@ -53,6 +54,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.jhproject.confidant.R
+import com.jhproject.confidant.ui.theme.MoodColorsTheme
 
 @Preview
 @Composable
@@ -66,6 +68,9 @@ fun EntryScreen(
     else {
         MaterialTheme.colorScheme.surfaceColorAtElevation(5.dp)
     }
+
+    val configuration = LocalConfiguration.current
+    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
 
     Surface(
         color = backgroundTheme,
@@ -85,11 +90,11 @@ fun EntryScreen(
             contentPadding = PaddingValues(
                 start = 16.dp,
                 end = 16.dp,
-                bottom = 20.dp
+                bottom = if (!isLandscape) 88.dp else 20.dp
             )
         ) {
             item {
-                EntryCard()
+                EntryCard(mood = "bad")
             }
             item {
                 EntryCard(mood = "good")
@@ -103,13 +108,18 @@ fun EntryScreen(
             item {
                 EntryCard(mood = "good")
             }
+            item {
+                EntryCard(mood = "awful")
+            }
         }
     }
 }
 
+@Immutable
 data class MoodResources(
     val icon: Int,
-    val label: String
+    val label: String,
+    val color: Color
 )
 
 @Preview
@@ -118,7 +128,7 @@ fun EntryCard(
     date: String = "Tuesday, November 18",
     time: String = "10:00 PM",
     mood: String = "great",
-    note: String = "I had a great day today. We got to see the show.",
+    note: String = "Sample note data. It will change depending on user mood.",
     darkTheme: Boolean = isSystemInDarkTheme()
 ) {
     val backgroundTheme = if (darkTheme) {
@@ -129,13 +139,42 @@ fun EntryCard(
     }
 
     val entryMood = when (mood) {
-        "great" -> MoodResources(R.drawable.sentiment_excited_24px, stringResource(R.string.great))
-        "good" -> MoodResources(R.drawable.sentiment_satisfied_24px, stringResource(R.string.good))
-        "meh" -> MoodResources(R.drawable.sentiment_neutral_24px, stringResource(R.string.meh))
-        "bad" -> MoodResources(R.drawable.sentiment_dissatisfied_24px, stringResource(R.string.bad))
-        "awful" -> MoodResources(R.drawable.sentiment_sad_24px, stringResource(R.string.awful))
+        "great" -> MoodResources(
+            R.drawable.sentiment_excited_24px,
+            stringResource(R.string.great),
+            MoodColorsTheme.colors.great
+        )
+
+        "good" -> MoodResources(
+            R.drawable.sentiment_satisfied_24px,
+            stringResource(R.string.good),
+            MoodColorsTheme.colors.good
+        )
+
+        "meh" -> MoodResources(
+            R.drawable.sentiment_neutral_24px,
+            stringResource(R.string.meh),
+            MoodColorsTheme.colors.meh
+        )
+
+        "bad" -> MoodResources(
+            R.drawable.sentiment_dissatisfied_24px,
+            stringResource(R.string.bad),
+            MoodColorsTheme.colors.bad
+        )
+
+        "awful" -> MoodResources(
+            R.drawable.sentiment_sad_24px,
+            stringResource(R.string.awful),
+            MoodColorsTheme.colors.awful
+        )
+
         else -> {
-            MoodResources(R.drawable.sentiment_neutral_24px, stringResource(R.string.meh))
+            MoodResources(
+                R.drawable.sentiment_neutral_24px,
+                stringResource(R.string.meh),
+                MoodColorsTheme.colors.meh
+            )
         }
     }
 
@@ -159,10 +198,10 @@ fun EntryCard(
                     contentAlignment = Alignment.Center,
                     modifier = Modifier.size(60.dp)
                 ) {
-                    Image(
-                        painter = painterResource(entryMood.icon),
+                    Icon(
+                        imageVector = ImageVector.vectorResource(entryMood.icon),
                         contentDescription = "Mood",
-                        colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.primary),
+                        tint = entryMood.color,
                         modifier = Modifier
                             .size(50.dp)
                     )
@@ -183,7 +222,8 @@ fun EntryCard(
                                 buildAnnotatedString {
                                     withStyle(
                                         style = MaterialTheme.typography.headlineMedium.copy(
-                                            fontWeight = FontWeight.Bold
+                                            fontWeight = FontWeight.Bold,
+                                            color = entryMood.color
                                         ).toSpanStyle(
                                         ),
                                     ) {
@@ -237,17 +277,22 @@ fun EntrySettingsButton() {
         DropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false },
-            shape = RoundedCornerShape(16.dp)
+            shape = RoundedCornerShape(16.dp),
+            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
         ) {
             DropdownMenuItem(
                 leadingIcon = {
                     Icon(
                         ImageVector.vectorResource(R.drawable.edit_24px),
+                        tint = MaterialTheme.colorScheme.onTertiaryContainer,
                         contentDescription = null
                     )
                 },
                 text = {
-                    Text(stringResource(R.string.edit))
+                    Text(
+                        stringResource(R.string.edit),
+                        color = MaterialTheme.colorScheme.onTertiaryContainer
+                    )
                 },
                 onClick = {
                     expanded = false
@@ -257,11 +302,15 @@ fun EntrySettingsButton() {
                 leadingIcon = {
                     Icon(
                         ImageVector.vectorResource(R.drawable.delete_24px),
+                        tint = MaterialTheme.colorScheme.onTertiaryContainer,
                         contentDescription = null
                     )
                 },
                 text = {
-                    Text(stringResource(R.string.delete))
+                    Text(
+                        stringResource(R.string.delete),
+                        color = MaterialTheme.colorScheme.onTertiaryContainer
+                    )
                 },
                 onClick = {
                     expanded = false
