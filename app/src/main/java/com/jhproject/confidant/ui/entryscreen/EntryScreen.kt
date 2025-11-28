@@ -1,6 +1,5 @@
 package com.jhproject.confidant.ui.entryscreen
 
-import android.content.res.Configuration
 import androidx.compose.foundation.BorderStroke
 
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -10,16 +9,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CardDefaults
@@ -44,7 +38,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.buildAnnotatedString
@@ -60,7 +53,7 @@ import com.jhproject.confidant.ui.theme.MoodColorsTheme
 @Composable
 fun EntryScreen(
     entryViewModel: EntryScreenViewModel = viewModel(),
-    darkTheme: Boolean = isSystemInDarkTheme()
+    darkTheme: Boolean = isSystemInDarkTheme(),
 ) {
     val backgroundTheme = if (darkTheme) {
         MaterialTheme.colorScheme.surfaceContainerLowest
@@ -69,9 +62,6 @@ fun EntryScreen(
         MaterialTheme.colorScheme.surfaceColorAtElevation(5.dp)
     }
 
-    val configuration = LocalConfiguration.current
-    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
-
     Surface(
         color = backgroundTheme,
         modifier = Modifier
@@ -79,18 +69,13 @@ fun EntryScreen(
     ) {
         LazyColumn(
             modifier = Modifier
-                .fillMaxSize()
-                .windowInsetsPadding(
-                    WindowInsets.safeDrawing.only(
-                        WindowInsetsSides.Horizontal
-                    )
-                ),
+                .fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(20.dp),
             contentPadding = PaddingValues(
                 start = 16.dp,
                 end = 16.dp,
-                bottom = if (!isLandscape) 88.dp else 20.dp
+                bottom = 88.dp
             )
         ) {
             item {
