@@ -8,6 +8,7 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
+
 class MainScreenViewModel : ViewModel() {
     val currentDate: LocalDate = LocalDate.now()
     val formatter: DateTimeFormatter = DateTimeFormatter.ofPattern("MMMM yyyy", Locale.getDefault())
@@ -15,5 +16,6 @@ class MainScreenViewModel : ViewModel() {
     val formattedCurrentDate: String = currentDate.format(formatter)
 
     var selectedDate: String by mutableStateOf(formattedCurrentDate)
+
 
 }

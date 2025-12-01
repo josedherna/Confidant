@@ -100,22 +100,27 @@ fun NavLabel(screen: PrimaryAppScreen) {
 
 @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
 @Composable
-fun MainScreen(windowSizeClass: WindowSizeClass) {
+fun MainScreen(
+    windowSizeClass: WindowSizeClass,
+    navigateToSearch: () -> Unit,
+    darkTheme: Boolean
+) {
     val navbarController = rememberNavController()
-
-    val navBackStackEntry by navbarController.currentBackStackEntryAsState()
-    val currentRoute = navBackStackEntry?.destination?.route ?: destinations.first().route
-
-    val selectedDestinationIndex = destinations.indexOfFirst { it.route == currentRoute }
 
     val configuration = LocalConfiguration.current
     val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+    val useNavRail = windowSizeClass.widthSizeClass > WindowWidthSizeClass.Compact || isLandscape
 
-    //Shows navigation rail on tablets and when device is in landscape
-    if (windowSizeClass.widthSizeClass > WindowWidthSizeClass.Compact || isLandscape) {
-        Row(
-            modifier = Modifier.fillMaxSize()
-        ) {
+    Row(
+        modifier = Modifier
+            .fillMaxSize()
+    ) {
+        if (useNavRail) {
+            val navBackStackEntry by navbarController.currentBackStackEntryAsState()
+            val currentRoute = navBackStackEntry?.destination?.route ?: destinations.first().route
+
+            val selectedDestinationIndex = destinations.indexOfFirst { it.route == currentRoute }
+
             NavigationRail(
                 containerColor = MaterialTheme.colorScheme.surfaceContainer
             ) {
@@ -153,49 +158,23 @@ fun MainScreen(windowSizeClass: WindowSizeClass) {
 
                 Spacer(modifier = Modifier.weight(1f))
             }
-
-            Scaffold(
-                modifier = Modifier.fillMaxSize(),
-                contentWindowInsets = WindowInsets(0),
-                topBar = {
-                    DateTopBar()
-                },
-                floatingActionButton = {
-                    EntryFAB()
-                }
-            ) { paddingValues ->
-                NavHost(
-                    navController = navbarController,
-                    startDestination = PrimaryAppScreen.ENTRIES.route,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues)
-                ) {
-                    composable(PrimaryAppScreen.ENTRIES.route) {
-                        EntryScreen()
-                    }
-                    composable(PrimaryAppScreen.STATS.route) {
-                        StatScreen()
-                    }
-                    composable(PrimaryAppScreen.SETTINGS.route) {
-                        SettingScreen()
-                    }
-                }
-            }
         }
-    }
-    else {
+
         Scaffold(
-            modifier = Modifier.fillMaxSize(),
             contentWindowInsets = WindowInsets(0),
             topBar = {
-                DateTopBar()
+                DateTopBar(searchClicked = navigateToSearch)
             },
             floatingActionButton = {
                 EntryFAB()
             },
             bottomBar = {
-                if (windowSizeClass.widthSizeClass == WindowWidthSizeClass.Compact) {
+                if (!useNavRail) {
+                    val navBackStackEntry by navbarController.currentBackStackEntryAsState()
+                    val currentRoute = navBackStackEntry?.destination?.route ?: destinations.first().route
+
+                    val selectedDestinationIndex = destinations.indexOfFirst { it.route == currentRoute }
+
                     NavigationBar(
                         windowInsets = NavigationBarDefaults.windowInsets,
                     ) {
@@ -203,7 +182,7 @@ fun MainScreen(windowSizeClass: WindowSizeClass) {
                             val isSelected = selectedDestinationIndex == index
 
                             NavigationBarItem(
-                                //Use the derived index for 'selected'
+                                //Uses the derived index for selected
                                 selected = isSelected,
                                 onClick = {
                                     if (!isSelected) {
@@ -230,8 +209,9 @@ fun MainScreen(windowSizeClass: WindowSizeClass) {
                         }
                     }
                 }
-            },
+            }
         ) { paddingValues ->
+
             NavHost(
                 navController = navbarController,
                 startDestination = PrimaryAppScreen.ENTRIES.route,
@@ -240,7 +220,7 @@ fun MainScreen(windowSizeClass: WindowSizeClass) {
                     .padding(paddingValues)
             ) {
                 composable(PrimaryAppScreen.ENTRIES.route) {
-                    EntryScreen()
+                    EntryScreen(darkTheme = darkTheme)
                 }
                 composable(PrimaryAppScreen.STATS.route) {
                     StatScreen()
@@ -289,9 +269,9 @@ fun MonthIconButton(icon: ImageVector) {
 }
 
 @Composable
-fun SearchButton() {
+fun SearchButton(navigateToSearch: () -> Unit) {
     FilledIconButton(
-        onClick = { },
+        onClick = navigateToSearch,
         colors = IconButtonDefaults.filledIconButtonColors(
             containerColor = MaterialTheme.colorScheme.primary,
             contentColor = MaterialTheme.colorScheme.onPrimary,
@@ -315,7 +295,8 @@ fun SearchButton() {
 @Composable
 fun DateTopBar(
     dateViewModel: MainScreenViewModel = viewModel(),
-    darkTheme: Boolean = isSystemInDarkTheme()
+    darkTheme: Boolean = isSystemInDarkTheme(),
+    searchClicked: () -> Unit = { }
 ) {
     val backgroundTheme = if (darkTheme) {
         MaterialTheme.colorScheme.surfaceContainerLowest
@@ -338,7 +319,7 @@ fun DateTopBar(
             }
         },
         actions = {
-            SearchButton()
+            SearchButton(searchClicked)
         }
     )
 }

@@ -23,4 +23,6 @@
     <string name="delete">Delete</string>
 
     <string name="edit_description">Edit this entry</string>
+
+    <string name="back">Back</string>
 </resources>

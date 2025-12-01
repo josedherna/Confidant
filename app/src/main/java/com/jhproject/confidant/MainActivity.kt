@@ -4,9 +4,10 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
 import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
-import com.jhproject.confidant.ui.mainscreen.MainScreen
+import com.jhproject.confidant.ui.navigation.AppNavigationHost
 import com.jhproject.confidant.ui.theme.ConfidantTheme
 
 class MainActivity : ComponentActivity() {
@@ -18,7 +19,12 @@ class MainActivity : ComponentActivity() {
         setContent {
             ConfidantTheme {
                 val windowSizeClass = calculateWindowSizeClass(this)
-                MainScreen(windowSizeClass)
+
+                val darkTheme = isSystemInDarkTheme()
+
+                AppNavigationHost(
+                    windowSizeClass,
+                    darkTheme)
             }
         }
     }

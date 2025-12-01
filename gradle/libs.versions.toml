@@ -12,6 +12,9 @@ navigationCompose = "2.9.6"
 material3 = "1.5.0-alpha09"
 foundationLayout = "1.9.5"
 material3WindowSizeClass = "1.4.0"
+ui = "1.9.5"
+foundation = "1.9.5"
+runtimeSaveable = "1.9.5"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -31,6 +34,9 @@ androidx-material3 = { group = "androidx.compose.material3", name = "material3",
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
 androidx-compose-foundation-layout = { group = "androidx.compose.foundation", name = "foundation-layout", version.ref = "foundationLayout" }
 androidx-compose-material3-window-size-class1 = { group = "androidx.compose.material3", name = "material3-window-size-class", version.ref = "material3WindowSizeClass" }
+androidx-compose-ui = { group = "androidx.compose.ui", name = "ui", version.ref = "ui" }
+androidx-compose-foundation = { group = "androidx.compose.foundation", name = "foundation", version.ref = "foundation" }
+androidx-compose-runtime-saveable = { group = "androidx.compose.runtime", name = "runtime-saveable", version.ref = "runtimeSaveable" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
