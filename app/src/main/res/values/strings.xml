@@ -8,7 +8,8 @@
     <string name="search_desc">Search</string>
     <string name="month_seek">Scroll</string>
 
-    <string name="create_fab">Create</string>
+    <string name="create_description">Create</string>
+    <string name="new_entry">New Entry</string>
     <string name="add_today">Create Today\'s Entry</string>
     <string name="add_other">Create Past Entry</string>
     <string name="add_important">Add New Important Day</string>
@@ -25,4 +26,14 @@
     <string name="edit_description">Edit this entry</string>
 
     <string name="back">Back</string>
+    <string name="close">Close</string>
+
+    <string name="date_label">Date</string>
+    <string name="time_label">Time</string>
+
+    <string name="entry_creation_title">Create Entry</string>
+    <string name="entry_creation_prompt">How are you feeling?</string>
+    <string name="entry_note_prompt">Entry Notes</string>
+    <string name="save_label">Save</string>
+    <string name="save_description">Save Entry</string>
 </resources>

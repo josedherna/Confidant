@@ -23,8 +23,8 @@ class MainActivity : ComponentActivity() {
                 val darkTheme = isSystemInDarkTheme()
 
                 AppNavigationHost(
-                    windowSizeClass,
-                    darkTheme)
+                    windowSizeClass = windowSizeClass,
+                    darkTheme = darkTheme)
             }
         }
     }
