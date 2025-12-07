@@ -21,7 +21,7 @@ class EntryRepository(
         entryDao.updateEntry(entry)
     }
 
-    suspend fun deleteEntry(entry: Entry) {
-        entryDao.deleteEntry(entry)
+    suspend fun deleteEntry(id: Int) {
+        entryDao.deleteEntry(id)
     }
 }

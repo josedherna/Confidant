@@ -24,7 +24,8 @@ class MainActivity : ComponentActivity() {
 
                 AppNavigationHost(
                     windowSizeClass = windowSizeClass,
-                    darkTheme = darkTheme)
+                    darkTheme = darkTheme
+                )
             }
         }
     }

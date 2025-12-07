@@ -42,11 +42,13 @@ fun AppNavigationHost(
     darkTheme: Boolean
 ) {
     val parentNavController = rememberNavController()
+
     val context = LocalContext.current.applicationContext as Application
 
     val mainScreenViewModel: MainScreenViewModel = viewModel(
         factory = EntryViewModelFactory(context)
     )
+
 
     val sheetScope = rememberCoroutineScope()
 

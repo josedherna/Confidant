@@ -32,6 +32,16 @@ class MainScreenViewModel(private val repository : EntryRepository) : ViewModel(
 
     val availableMonths: Flow<List<MonthYear>> = repository.getAvailableMonths()
 
+    private var initialized = false
+
+    //Ensures that the selected month is initialized and survives configuration changes
+    fun initSelectedMonth(months: List<MonthYear>) {
+        if (!initialized) {
+            selectedMonth.value = months.firstOrNull() ?: currentMonthYear()
+            initialized = true
+        }
+    }
+
     fun setSelectedMonth(month: MonthYear) {
         selectedMonth.value = month
     }
@@ -80,6 +90,13 @@ class MainScreenViewModel(private val repository : EntryRepository) : ViewModel(
     fun saveEntry(entry: Entry) {
         viewModelScope.launch {
             repository.insertEntry(entry)
+        }
+    }
+
+    //Deletes an entry from the database based on its ID
+    fun deleteEntry(id: Int) {
+        viewModelScope.launch {
+            repository.deleteEntry(id)
         }
     }
 

@@ -1,7 +1,6 @@
 package com.jhproject.confidant.data
 
 import androidx.room.Dao
-import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Update
@@ -36,6 +35,6 @@ interface EntryDao {
     @Update
     suspend fun updateEntry(entry: Entry)
 
-    @Delete
-    suspend fun deleteEntry(entry: Entry)
+    @Query("DELETE FROM entries WHERE id = :id")
+    suspend fun deleteEntry(id: Int)
 }

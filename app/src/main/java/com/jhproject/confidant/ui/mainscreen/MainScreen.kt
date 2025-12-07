@@ -315,11 +315,7 @@ fun DateTopBar(
 
     //Auto-selects month if null
     LaunchedEffect(months) {
-        if (months.isEmpty()) {
-            dateViewModel.setSelectedMonth(dateViewModel.currentMonthYear())
-        } else if (selectedMonth == null || selectedMonth !in months) {
-            dateViewModel.setSelectedMonth(months.first())
-        }
+        dateViewModel.initSelectedMonth(months)
     }
 
     CenterAlignedTopAppBar(
