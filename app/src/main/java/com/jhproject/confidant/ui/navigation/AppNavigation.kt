@@ -1,5 +1,6 @@
 package com.jhproject.confidant.ui.navigation
 
+import android.app.Application
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -14,6 +15,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -22,6 +24,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.jhproject.confidant.ui.mainscreen.MainScreen
 import com.jhproject.confidant.R
+import com.jhproject.confidant.data.EntryViewModelFactory
 import com.jhproject.confidant.ui.entryscreen.EntryCreationBottomSheet
 import com.jhproject.confidant.ui.mainscreen.MainScreenViewModel
 import com.jhproject.confidant.ui.searchscreen.SearchStartScreen
@@ -30,18 +33,20 @@ import kotlinx.coroutines.launch
 enum class AppScreen(val route: String) {
     MAIN_SCREEN("main_screen"),
     SEARCH_SCREEN("search_screen"),
-    //ENTRY_CREATION_SCREEN("entry_creation_screen")
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppNavigationHost(
     windowSizeClass: WindowSizeClass,
-    mainScreenViewModel: MainScreenViewModel = viewModel(),
     darkTheme: Boolean
 ) {
     val parentNavController = rememberNavController()
+    val context = LocalContext.current.applicationContext as Application
 
+    val mainScreenViewModel: MainScreenViewModel = viewModel(
+        factory = EntryViewModelFactory(context)
+    )
 
     val sheetScope = rememberCoroutineScope()
 
@@ -79,6 +84,8 @@ fun AppNavigationHost(
                     entryCreationSheetState.hide()
                     showEntryCreationSheet = false
                 }.invokeOnCompletion {
+                    mainScreenViewModel.setSelectedDate(null)
+                    mainScreenViewModel.setSelectedTime(null)
                     mainScreenViewModel.setSelectedMoodCreationID(null)
                     mainScreenViewModel.onTextFieldValueChange("")
                 }

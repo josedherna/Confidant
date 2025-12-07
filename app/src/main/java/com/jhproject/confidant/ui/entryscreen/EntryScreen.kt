@@ -61,13 +61,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.layout.onSizeChanged
@@ -78,48 +78,35 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.jhproject.confidant.R
+import com.jhproject.confidant.data.Entry
 import com.jhproject.confidant.ui.mainscreen.MainScreenViewModel
-import com.jhproject.confidant.ui.theme.AwfulDark
-import com.jhproject.confidant.ui.theme.AwfulLight
-import com.jhproject.confidant.ui.theme.BadDark
-import com.jhproject.confidant.ui.theme.BadLight
-import com.jhproject.confidant.ui.theme.GoodDark
-import com.jhproject.confidant.ui.theme.GoodLight
-import com.jhproject.confidant.ui.theme.GreatDark
-import com.jhproject.confidant.ui.theme.GreatLight
-import com.jhproject.confidant.ui.theme.MehDark
-import com.jhproject.confidant.ui.theme.MehLight
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.map
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.ZoneId
-import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 
-@Preview
+@OptIn(ExperimentalCoroutinesApi::class)
 @Composable
 fun EntryScreen(
     darkTheme: Boolean = false,
-    entryScreenViewModel: EntryScreenViewModel = viewModel(),
+    mainScreenViewModel: MainScreenViewModel,
 ) {
     val background = if (darkTheme) MaterialTheme.colorScheme.surfaceContainerLowest else MaterialTheme.colorScheme.surfaceColorAtElevation(5.dp)
 
     val listState = rememberLazyListState()
 
-    val entries by entryScreenViewModel.entries.collectAsState()
-
-//    LaunchedEffect(Unit) {
-//        entryScreenViewModel.loadEntries()
-//    }
+    val entries by mainScreenViewModel.entryCards.collectAsState()
 
     val isInitialLoad = entries.isEmpty()
 
     Surface(
-        color = background, modifier = Modifier.fillMaxSize()
+        color = background,
+        modifier = Modifier.fillMaxSize()
     ) {
 
         LazyColumn(
@@ -138,67 +125,12 @@ fun EntryScreen(
             if (!isInitialLoad) {
                 items(entries, key = { it.id }) { item ->
                     EntryCard(
-                        data = item, darkTheme = darkTheme
+                        data = item,
+                        darkTheme = darkTheme
                     )
                 }
             }
         }
-    }
-}
-
-enum class Mood(
-    val key: String,
-    val label: Int,
-    val icon: Int,
-    val iconFilled: Int,
-    val lightColor: Color,
-    val darkColor: Color
-) {
-    AWFUL(
-        "awful",
-        R.string.awful,
-        R.drawable.sentiment_sad_24px,
-        R.drawable.sentiment_sad_filled_24px,
-        AwfulLight,
-        AwfulDark),
-    BAD(
-        "bad",
-        R.string.bad,
-        R.drawable.sentiment_dissatisfied_24px,
-        R.drawable.sentiment_dissatisfied_filled_24px,
-        BadLight,
-        BadDark
-    ),
-    MEH(
-        "meh",
-        R.string.meh,
-        R.drawable.sentiment_neutral_24px,
-        R.drawable.sentiment_neutral_filled_24px,
-        MehLight,
-        MehDark),
-    GOOD(
-        "good",
-        R.string.good,
-        R.drawable.sentiment_satisfied_24px,
-        R.drawable.sentiment_satisfied_filled_24px,
-        GoodLight,
-        GoodDark
-    ),
-    GREAT(
-        "great",
-        R.string.great,
-        R.drawable.sentiment_excited_24px,
-        R.drawable.sentiment_excited_filled_24px,
-        GreatLight,
-        GreatDark
-    );
-
-    companion object {
-        private val lookup: Map<String, Mood> =
-            entries.associateBy { it.key }
-
-        fun fromKey(key: String): Mood =
-            lookup[key] ?: MEH
     }
 }
 
@@ -380,9 +312,17 @@ fun DateField(
     val icon = rememberVectorPainter(ImageVector.vectorResource(R.drawable.otherday_24px))
     val label = stringResource(R.string.date_label)
 
+    LaunchedEffect(Unit) {
+        if (viewModel.selectedDateMillis == null) {
+            val default = LocalDate.now().atStartOfDay(ZoneId.systemDefault())
+                .toInstant().toEpochMilli()
+            viewModel.setSelectedDate(default)
+        }
+    }
+
     var selectedDate by remember {
         mutableLongStateOf(
-            viewModel.selectedDateMillis ?: LocalDate.now().atStartOfDay(ZoneOffset.UTC).toInstant()
+            viewModel.selectedDateMillis ?: LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant()
                 .toEpochMilli()
         )
     }
@@ -433,12 +373,12 @@ fun DateField(
 }
 
 fun convertMillisToDate(millis: Long): String {
-    val utcDate = Instant.ofEpochMilli(millis)
-        .atZone(ZoneOffset.UTC)
+    val localDate = Instant.ofEpochMilli(millis)
+        .atZone(ZoneId.systemDefault())
         .toLocalDate()
 
     val formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy")
-    return utcDate.format(formatter)
+    return localDate.format(formatter)
 }
 
 @Composable
@@ -447,7 +387,7 @@ fun ModalDatePicker(
     onDismiss: () -> Unit
 ) {
     val todayUTC = LocalDate.now()
-        .atStartOfDay(ZoneOffset.UTC)
+        .atStartOfDay(ZoneId.systemDefault())
         .toInstant()
         .toEpochMilli()
 
@@ -499,9 +439,12 @@ fun millisToLocalTime(millis: Long): LocalTime {
         .toLocalTime()
 }
 
-fun localTimeToMillis(hour: Int, minute: Int): Long {
-    val today = LocalDate.now()
-    return LocalDateTime.of(today, LocalTime.of(hour, minute))
+fun localTimeToMillis(selectedDateMillis: Long, hour: Int, minute: Int): Long {
+    val date = Instant.ofEpochMilli(selectedDateMillis)
+        .atZone(ZoneId.systemDefault())
+        .toLocalDate()
+
+    return LocalDateTime.of(date, LocalTime.of(hour, minute))
         .atZone(ZoneId.systemDefault())
         .toInstant()
         .toEpochMilli()
@@ -514,6 +457,13 @@ fun TimeField(
     modifier: Modifier = Modifier
 ) {
     var showTimePicker by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        if (viewModel.selectedTimeMillis == null) {
+            val default = System.currentTimeMillis()
+            viewModel.setSelectedTime(default)
+        }
+    }
 
     //Loads from ViewModel as a Long
     val storedTimeMillis = viewModel.selectedTimeMillis
@@ -570,6 +520,7 @@ fun TimeField(
                     onClick = {
                         // Build new time as millis
                         val millis = localTimeToMillis(
+                            selectedDateMillis = viewModel.selectedDateMillis ?: System.currentTimeMillis(),
                             hour = timePickerState.hour,
                             minute = timePickerState.minute
                         )
@@ -660,8 +611,8 @@ fun EntryCreationBottomSheet(
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
 
     val listState = rememberLazyListState()
-    var lastHeight by remember { mutableStateOf(0) }
-    var currentHeight by remember { mutableStateOf(0) }
+    var lastHeight by remember { mutableIntStateOf(0) }
+    var currentHeight by remember { mutableIntStateOf(0) }
 
     LaunchedEffect(currentHeight) {
         val delta = currentHeight - lastHeight
@@ -689,9 +640,8 @@ fun EntryCreationBottomSheet(
                         .padding(
                             start = 16.dp,
                             end = 16.dp,
-                            bottom = 50.dp
                         ),
-                    verticalArrangement = Arrangement.spacedBy(50.dp)
+                    verticalArrangement = Arrangement.spacedBy(46.dp)
                 ) {
                     item {
                         TopAppBar(
@@ -718,7 +668,7 @@ fun EntryCreationBottomSheet(
                     item {
                         Text(
                             text = stringResource(R.string.entry_creation_prompt),
-                            style = MaterialTheme.typography.titleLarge,
+                            style = MaterialTheme.typography.headlineMedium,
                             fontWeight = FontWeight.Bold
                         )
                     }
@@ -747,24 +697,46 @@ fun EntryCreationBottomSheet(
                     }
 
                     item {
-                        SaveButton()
+                        SaveButton(
+                            mainScreenViewModel,
+                            onDismissRequest = onDismissRequest
+                        )
+                    }
+
+                    item {
+                        Spacer(modifier = Modifier.height(0.dp))
                     }
                 }
             }
     }
 }
 
-@Preview
 @Composable
-fun SaveButton() {
+fun SaveButton(
+    viewModel: MainScreenViewModel,
+    onDismissRequest: () -> Unit,
+) {
     val saveButtonStyle = MaterialTheme.typography.headlineSmall
 
+    val selectedMoodId by viewModel.selectedMoodCreationID.collectAsState()
+    val moodSelected = selectedMoodId != null
+
     Button(
-        onClick = { /*TODO*/ },
+        onClick = {
+            viewModel.saveEntry(
+                Entry(
+                    mood = viewModel.getMoodByID(viewModel.selectedMoodCreationID.value ?: 0).key,
+                    entryDate = viewModel.selectedDateMillis ?: 0,
+                    entryTime = viewModel.selectedTimeMillis ?: 0,
+                    notes = viewModel.textFieldValue.value
+                )
+            )
+            onDismissRequest()
+        },
+        enabled = moodSelected,
         modifier = Modifier
             .width(214.dp)
             .height(96.dp),
-
     ) {
         Icon(
             imageVector = ImageVector.vectorResource(R.drawable.check_24px),

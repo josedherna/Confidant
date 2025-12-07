@@ -3,7 +3,6 @@ package com.jhproject.confidant.ui.mainscreen
 import android.content.res.Configuration
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -37,6 +36,8 @@ import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -46,7 +47,6 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -59,12 +59,14 @@ import com.jhproject.confidant.ui.settingscreen.SettingScreen
 import com.jhproject.confidant.ui.statscreen.StatScreen
 import com.jhproject.confidant.R
 
+//Defines the primary app screens
 enum class PrimaryAppScreen(val route: String, val title: Int, val icon: Int, val filledIcon: Int) {
     ENTRIES("entry_screen", R.string.nav_1, R.drawable.book_24px, R.drawable.book_filled_24px),
     STATS("stat_screen", R.string.nav_2, R.drawable.chart_data_24px, R.drawable.chart_data_filled_24px),
     SETTINGS("setting_screen", R.string.nav_3, R.drawable.settings_24px, R.drawable.settings_filled_24px)
 }
 
+//List of destinations that the navigation bar/rail will display
 private val destinations = PrimaryAppScreen.entries
 
 @Immutable
@@ -72,6 +74,7 @@ data class ScreenIcons(
     val default: ImageVector,
     val filled: ImageVector
 )
+
 @Composable
 fun rememberScreenIcons(screen: PrimaryAppScreen): ScreenIcons {
     val unselectedPainter = ImageVector.vectorResource(screen.icon)
@@ -160,13 +163,17 @@ fun MainScreen(
             .fillMaxSize()
     ) {
         if (useNavRail) {
-            AppNavRail(navbarController)
+            AppNavRail(navController = navbarController)
         }
 
         Scaffold(
             contentWindowInsets = WindowInsets(0),
             topBar = {
-                DateTopBar(mainScreenViewModel, searchClicked = navigateToSearch)
+                DateTopBar(
+                    dateViewModel = mainScreenViewModel,
+                    searchClicked = navigateToSearch,
+                    darkTheme = darkTheme
+                )
             },
             floatingActionButton = {
                 EntryFab(openEntryCreationSheet)
@@ -215,7 +222,7 @@ fun MainScreen(
                     .padding(paddingValues)
             ) {
                 composable(PrimaryAppScreen.ENTRIES.route) {
-                    EntryScreen(darkTheme = darkTheme)
+                    EntryScreen(mainScreenViewModel = mainScreenViewModel, darkTheme = darkTheme)
                 }
                 composable(PrimaryAppScreen.STATS.route) {
                     StatScreen()
@@ -228,9 +235,8 @@ fun MainScreen(
     }
 }
 
-@Preview
 @Composable
-fun MonthLabel(date: String = "October 2025") {
+fun MonthLabel(date: String) {
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
@@ -248,9 +254,14 @@ fun MonthLabel(date: String = "October 2025") {
 }
 
 @Composable
-fun MonthIconButton(icon: ImageVector) {
+fun MonthIconButton(
+    scrollMonths: () -> Unit,
+    enabled: Boolean,
+    icon: ImageVector
+) {
     OutlinedIconButton(
-        onClick = { },
+        onClick = scrollMonths,
+        enabled = enabled,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
         colors = IconButtonDefaults.outlinedIconButtonColors(
             contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -289,7 +300,7 @@ fun SearchButton(navigateToSearch: () -> Unit) {
 @Composable
 fun DateTopBar(
     dateViewModel: MainScreenViewModel,
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    darkTheme: Boolean,
     searchClicked: () -> Unit = { }
 ) {
     val backgroundTheme = if (darkTheme) {
@@ -298,6 +309,19 @@ fun DateTopBar(
     else {
         MaterialTheme.colorScheme.surfaceColorAtElevation(5.dp)
     }
+
+    val months by dateViewModel.availableMonths.collectAsState(emptyList())
+    val selectedMonth by dateViewModel.initSelectedMonth.collectAsState()
+
+    //Auto-selects month if null
+    LaunchedEffect(months) {
+        if (months.isEmpty()) {
+            dateViewModel.setSelectedMonth(dateViewModel.currentMonthYear())
+        } else if (selectedMonth == null || selectedMonth !in months) {
+            dateViewModel.setSelectedMonth(months.first())
+        }
+    }
+
     CenterAlignedTopAppBar(
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = backgroundTheme
@@ -307,9 +331,22 @@ fun DateTopBar(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(5.dp),
             ) {
-                MonthIconButton(ImageVector.vectorResource(R.drawable.arrow_back_24px))
-                MonthLabel(dateViewModel.selectedDate)
-                MonthIconButton(ImageVector.vectorResource(R.drawable.arrow_forward_24px))
+                MonthIconButton(
+                    scrollMonths = {
+                        val index = months.indexOf(selectedMonth)
+                        if (index < months.lastIndex) dateViewModel.setSelectedMonth(months[index + 1])
+                    },
+                    enabled = months.indexOf(selectedMonth) < months.lastIndex,
+                    icon = ImageVector.vectorResource(R.drawable.arrow_back_24px))
+                MonthLabel(selectedMonth?.label() ?: "")
+                MonthIconButton(
+                    scrollMonths = {
+                        val index = months.indexOf(selectedMonth)
+                        if (index > 0) dateViewModel.setSelectedMonth(months[index - 1])
+                    },
+                    enabled = months.indexOf(selectedMonth) > 0,
+                    icon = ImageVector.vectorResource(R.drawable.arrow_forward_24px),
+                )
             }
         },
         actions = {

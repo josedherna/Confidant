@@ -1,11 +1,13 @@
 package com.jhproject.confidant.data
 
+import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
 
+@Dao
 interface EntryDao {
     @Query("""
         SELECT 
@@ -21,16 +23,19 @@ interface EntryDao {
         SELECT * FROM entries
         WHERE entry_date >= :startMillis
           AND entry_date < :endMillis
-        ORDER BY entry_time DESC
+        ORDER BY entry_date DESC, entry_time DESC
     """)
     fun getEntriesForMonth(startMillis: Long, endMillis: Long): Flow<List<Entry>>
 
+    @Query("SELECT COUNT(*) FROM entries")
+    fun countEntries(): Flow<Int>
+
     @Insert
-    fun insertEntry(entry: Entry)
+    suspend fun insertEntry(entry: Entry)
 
     @Update
-    fun updateEntry(entry: Entry)
+    suspend fun updateEntry(entry: Entry)
 
     @Delete
-    fun deleteEntry(entry: Entry)
+    suspend fun deleteEntry(entry: Entry)
 }
