@@ -36,4 +36,11 @@
     <string name="entry_note_prompt">Entry Notes</string>
     <string name="save_label">Save</string>
     <string name="save_description">Save Entry</string>
+
+    <string name="ok_label">Ok</string>
+
+    <string name="delete_title">Delete this entry?</string>
+    <string name="delete_action">Delete</string>
+    <string name="cancel_label">Cancel</string>
+    <string name="delete_description">Your selected entry will be deleted from your journal. This action cannot be undone.</string>
 </resources>

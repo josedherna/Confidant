@@ -29,6 +29,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DatePicker
@@ -76,7 +77,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.jhproject.confidant.R
 import com.jhproject.confidant.data.Entry
@@ -126,7 +126,8 @@ fun EntryScreen(
                 items(entries, key = { it.id }) { item ->
                     EntryCard(
                         data = item,
-                        darkTheme = darkTheme
+                        darkTheme = darkTheme,
+                        viewModel = mainScreenViewModel
                     )
                 }
             }
@@ -139,7 +140,8 @@ private val moodIcons = Mood.entries
 @Composable
 fun EntryCard(
     data: EntryCardData,
-    darkTheme: Boolean
+    darkTheme: Boolean,
+    viewModel: MainScreenViewModel
 ) {
     val mood = Mood.fromKey(data.mood)
 
@@ -172,7 +174,10 @@ fun EntryCard(
             )
 
             Column(Modifier.weight(1f)) {
-                Text(data.date, style = dateStyle)
+                Text(
+                    text = data.date,
+                    style = dateStyle
+                )
 
                 Row(verticalAlignment = Alignment.Bottom) {
                     Text(
@@ -190,18 +195,64 @@ fun EntryCard(
                     )
                 }
 
-                Text(data.note, style = noteStyle)
+                Text(
+                    text = data.note,
+                    style = noteStyle
+                )
             }
 
-            EntryCardMenu()
+            EntryCardMenu(
+                cardID = data.id,
+                viewModel = viewModel
+            )
         }
     }
 }
 
-@Preview
+
 @Composable
-fun EntryCardMenu() {
+fun DeleteDialog(
+    isVisible: Boolean,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val dialogIcon = rememberVectorPainter(ImageVector.vectorResource(R.drawable.delete_24px))
+
+    if (isVisible) {
+        AlertDialog(
+            onDismissRequest = onDismiss,
+            icon = {
+                Icon(
+                    painter = dialogIcon, contentDescription = null
+                )
+            },
+            title = {
+                Text(stringResource(R.string.delete_title))
+            },
+            text = {
+                Text(stringResource(R.string.delete_description))
+            },
+            confirmButton = {
+                TextButton(onClick = onConfirm) {
+                    Text(text = stringResource(R.string.delete_action))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = onDismiss) {
+                    Text(stringResource(R.string.cancel_label))
+                }
+            },
+        )
+    }
+}
+
+@Composable
+fun EntryCardMenu(
+    cardID: Int,
+    viewModel: MainScreenViewModel
+) {
     var expanded by remember { mutableStateOf(false) }
+    var showDeleteConfirmationDialog by remember { mutableStateOf(false) }
 
     val menuIcon = rememberVectorPainter(ImageVector.vectorResource(R.drawable.more_horiz_24px))
     val editIcon = rememberVectorPainter(ImageVector.vectorResource(R.drawable.edit_24px))
@@ -229,17 +280,53 @@ fun EntryCardMenu() {
             containerColor = MaterialTheme.colorScheme.tertiaryContainer
         ) {
             DropdownMenuItem(
-                leadingIcon = { Icon(editIcon, contentDescription = null, tint = MaterialTheme.colorScheme.onTertiaryContainer) },
-                text = { Text(stringResource(R.string.edit), color = MaterialTheme.colorScheme.onTertiaryContainer) },
+                leadingIcon = {
+                    Icon(
+                        painter = editIcon,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onTertiaryContainer
+                    )
+                },
+                text = {
+                    Text(
+                        text = stringResource(R.string.edit),
+                        color = MaterialTheme.colorScheme.onTertiaryContainer
+                    )
+                },
                 onClick = { expanded = false }
             )
 
             DropdownMenuItem(
-                leadingIcon = { Icon(deleteIcon, contentDescription = null, tint = MaterialTheme.colorScheme.onTertiaryContainer) },
-                text = { Text(stringResource(R.string.delete), color = MaterialTheme.colorScheme.onTertiaryContainer) },
-                onClick = { expanded = false }
+                leadingIcon = {
+                    Icon(
+                        painter = deleteIcon,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onTertiaryContainer
+                    )
+                },
+                text = {
+                    Text(
+                        text = stringResource(R.string.delete),
+                        color = MaterialTheme.colorScheme.onTertiaryContainer
+                    )
+                },
+                onClick = {
+                    expanded = false
+                    showDeleteConfirmationDialog = true
+                }
             )
         }
+
+        DeleteDialog(
+            isVisible = showDeleteConfirmationDialog,
+            onConfirm = {
+                showDeleteConfirmationDialog = false
+                viewModel.deleteEntry(cardID)
+            },
+            onDismiss = {
+                showDeleteConfirmationDialog = false
+            }
+        )
     }
 }
 
@@ -533,7 +620,7 @@ fun TimeField(
                         showTimePicker = false
                     }
                 ) {
-                    Text("OK")
+                    Text(text = stringResource(R.string.ok_label))
                 }
             },
             dismissButton = {
@@ -542,7 +629,7 @@ fun TimeField(
                         showTimePicker = false
                     }
                 ) {
-                    Text("Cancel")
+                    Text(text = stringResource(R.string.cancel_label))
                 }
             },
             title = { }
@@ -600,117 +687,6 @@ fun EntryDateTimeRow(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun EntryCreationBottomSheet(
-    onDismissRequest: () -> Unit,
-    mainScreenViewModel: MainScreenViewModel,
-    darkTheme: Boolean,
-    sheetState: SheetState,
-) {
-    val screenHeight = LocalConfiguration.current.screenHeightDp.dp
-
-    val listState = rememberLazyListState()
-    var lastHeight by remember { mutableIntStateOf(0) }
-    var currentHeight by remember { mutableIntStateOf(0) }
-
-    LaunchedEffect(currentHeight) {
-        val delta = currentHeight - lastHeight
-        if (delta > 0) {
-            listState.scrollBy(delta.toFloat())
-        }
-        lastHeight = currentHeight
-    }
-
-    ModalBottomSheet(
-        onDismissRequest = onDismissRequest,
-        sheetState = sheetState,
-        modifier = Modifier.statusBarsPadding()
-    ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = screenHeight, screenHeight)
-            ) {
-                LazyColumn(
-                    state = listState,
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(
-                            start = 16.dp,
-                            end = 16.dp,
-                        ),
-                    verticalArrangement = Arrangement.spacedBy(46.dp)
-                ) {
-                    item {
-                        TopAppBar(
-                            title = {
-                                Text(
-                                    text = ""
-                                )
-                            },
-                            navigationIcon = {
-                                IconButton(
-                                    onClick = onDismissRequest
-                                ) {
-                                    Icon(
-                                        imageVector = ImageVector.vectorResource(R.drawable.close_24px),
-                                        contentDescription = stringResource(R.string.close)
-                                    )
-                                }
-                            },
-                            colors = TopAppBarDefaults.topAppBarColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-                            )
-                        )
-                    }
-                    item {
-                        Text(
-                            text = stringResource(R.string.entry_creation_prompt),
-                            style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-
-                    item {
-                        MoodButtonRow(mainScreenViewModel, darkTheme)
-                    }
-
-                    item {
-                        EntryDateTimeRow(
-                            viewModel = mainScreenViewModel
-                        )
-                    }
-
-                    item {
-                        Box(
-                            Modifier.heightIn(max = 600.dp)
-                        ) {
-                            EntryNoteField(
-                                onHeightChanged = { newHeight ->
-                                    currentHeight = newHeight
-                                },
-                                mainScreenViewModel = mainScreenViewModel
-                            )
-                        }
-                    }
-
-                    item {
-                        SaveButton(
-                            mainScreenViewModel,
-                            onDismissRequest = onDismissRequest
-                        )
-                    }
-
-                    item {
-                        Spacer(modifier = Modifier.height(0.dp))
-                    }
-                }
-            }
-    }
-}
-
 @Composable
 fun SaveButton(
     viewModel: MainScreenViewModel,
@@ -748,5 +724,116 @@ fun SaveButton(
             text = stringResource(R.string.save_label),
             style = saveButtonStyle
         )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun EntryCreationBottomSheet(
+    onDismissRequest: () -> Unit,
+    mainScreenViewModel: MainScreenViewModel,
+    darkTheme: Boolean,
+    sheetState: SheetState,
+) {
+    val screenHeight = LocalConfiguration.current.screenHeightDp.dp
+
+    val listState = rememberLazyListState()
+    var lastHeight by remember { mutableIntStateOf(0) }
+    var currentHeight by remember { mutableIntStateOf(0) }
+
+    LaunchedEffect(currentHeight) {
+        val delta = currentHeight - lastHeight
+        if (delta > 0) {
+            listState.scrollBy(delta.toFloat())
+        }
+        lastHeight = currentHeight
+    }
+
+    ModalBottomSheet(
+        onDismissRequest = onDismissRequest,
+        sheetState = sheetState,
+        modifier = Modifier.statusBarsPadding()
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = screenHeight, screenHeight)
+        ) {
+            LazyColumn(
+                state = listState,
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        start = 16.dp,
+                        end = 16.dp,
+                    ),
+                verticalArrangement = Arrangement.spacedBy(46.dp)
+            ) {
+                item {
+                    TopAppBar(
+                        title = {
+                            Text(
+                                text = ""
+                            )
+                        },
+                        navigationIcon = {
+                            IconButton(
+                                onClick = onDismissRequest
+                            ) {
+                                Icon(
+                                    imageVector = ImageVector.vectorResource(R.drawable.close_24px),
+                                    contentDescription = stringResource(R.string.close)
+                                )
+                            }
+                        },
+                        colors = TopAppBarDefaults.topAppBarColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+                        )
+                    )
+                }
+                item {
+                    Text(
+                        text = stringResource(R.string.entry_creation_prompt),
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                item {
+                    MoodButtonRow(mainScreenViewModel, darkTheme)
+                }
+
+                item {
+                    EntryDateTimeRow(
+                        viewModel = mainScreenViewModel
+                    )
+                }
+
+                item {
+                    Box(
+                        Modifier.heightIn(max = 600.dp)
+                    ) {
+                        EntryNoteField(
+                            onHeightChanged = { newHeight ->
+                                currentHeight = newHeight
+                            },
+                            mainScreenViewModel = mainScreenViewModel
+                        )
+                    }
+                }
+
+                item {
+                    SaveButton(
+                        mainScreenViewModel,
+                        onDismissRequest = onDismissRequest
+                    )
+                }
+
+                item {
+                    Spacer(modifier = Modifier.height(0.dp))
+                }
+            }
+        }
     }
 }
