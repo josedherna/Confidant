@@ -100,6 +100,18 @@ class MainScreenViewModel(private val repository : EntryRepository) : ViewModel(
                 emptyList()
             )
 
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val mostCommonMood: StateFlow<String?> = initSelectedMonth
+        .flatMapLatest { month ->
+            val (start, end) = monthRange(month ?: currentMonthYear())
+            repository.getMostCommonMood(start, end)
+        }
+        .stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5000),
+            null
+        )
+
     //Saves entry to the database, as an entry entity
     fun saveEntry(entry: Entry) {
         viewModelScope.launch {

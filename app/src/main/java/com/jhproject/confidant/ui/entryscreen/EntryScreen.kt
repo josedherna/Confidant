@@ -93,15 +93,15 @@ import java.time.format.DateTimeFormatter
 @OptIn(ExperimentalCoroutinesApi::class)
 @Composable
 fun EntryScreen(
-    darkTheme: Boolean = false,
+    darkTheme: Boolean,
     openEditEntry: () -> Unit,
-    mainScreenViewModel: MainScreenViewModel,
+    viewModel: MainScreenViewModel,
 ) {
     val background = if (darkTheme) MaterialTheme.colorScheme.surfaceContainerLowest else MaterialTheme.colorScheme.surfaceColorAtElevation(5.dp)
 
     val listState = rememberLazyListState()
 
-    val entries by mainScreenViewModel.entryCards.collectAsState()
+    val entries by viewModel.entryCards.collectAsState()
 
     val isInitialLoad = entries.isEmpty()
 
@@ -129,7 +129,7 @@ fun EntryScreen(
                         data = item,
                         darkTheme = darkTheme,
                         openEditEntry = openEditEntry,
-                        viewModel = mainScreenViewModel
+                        viewModel = viewModel
                     )
                 }
             }
@@ -190,7 +190,7 @@ fun EntryCard(
                         color = color,
                         modifier = Modifier.alignByBaseline()
                     )
-                    Spacer(Modifier.width(8.dp))
+                    Spacer(Modifier.width(10.dp))
                     Text(
                         text = data.time,
                         style = timeStyle,

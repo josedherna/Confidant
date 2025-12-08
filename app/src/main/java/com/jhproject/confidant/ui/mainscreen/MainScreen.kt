@@ -150,7 +150,7 @@ fun MainScreen(
     openEntryCreationSheet: () -> Unit,
     openEditEntry: () -> Unit,
     darkTheme: Boolean,
-    mainScreenViewModel: MainScreenViewModel
+    viewModel: MainScreenViewModel
 ) {
     val navbarController = rememberNavController()
 
@@ -171,7 +171,7 @@ fun MainScreen(
             contentWindowInsets = WindowInsets(0),
             topBar = {
                 DateTopBar(
-                    dateViewModel = mainScreenViewModel,
+                    viewModel = viewModel,
                     searchClicked = navigateToSearch,
                     darkTheme = darkTheme
                 )
@@ -215,7 +215,6 @@ fun MainScreen(
                 }
             }
         ) { paddingValues ->
-
             NavHost(
                 navController = navbarController,
                 startDestination = PrimaryAppScreen.ENTRIES.route,
@@ -224,13 +223,16 @@ fun MainScreen(
             ) {
                 composable(PrimaryAppScreen.ENTRIES.route) {
                     EntryScreen(
-                        mainScreenViewModel = mainScreenViewModel,
+                        viewModel = viewModel,
                         openEditEntry = openEditEntry,
                         darkTheme = darkTheme
                     )
                 }
                 composable(PrimaryAppScreen.STATS.route) {
-                    StatScreen()
+                    StatScreen(
+                        darkTheme = darkTheme,
+                        viewModel = viewModel
+                    )
                 }
                 composable(PrimaryAppScreen.SETTINGS.route) {
                     SettingScreen()
@@ -304,7 +306,7 @@ fun SearchButton(navigateToSearch: () -> Unit) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DateTopBar(
-    dateViewModel: MainScreenViewModel,
+    viewModel: MainScreenViewModel,
     darkTheme: Boolean,
     searchClicked: () -> Unit = { }
 ) {
@@ -315,12 +317,12 @@ fun DateTopBar(
         MaterialTheme.colorScheme.surfaceColorAtElevation(5.dp)
     }
 
-    val months by dateViewModel.availableMonths.collectAsState(emptyList())
-    val selectedMonth by dateViewModel.initSelectedMonth.collectAsState()
+    val months by viewModel.availableMonths.collectAsState(emptyList())
+    val selectedMonth by viewModel.initSelectedMonth.collectAsState()
 
     //Auto-selects month if null
     LaunchedEffect(months) {
-        dateViewModel.displaySelectedMonth(months)
+        viewModel.displaySelectedMonth(months)
     }
 
     CenterAlignedTopAppBar(
@@ -335,7 +337,7 @@ fun DateTopBar(
                 MonthIconButton(
                     scrollMonths = {
                         val index = months.indexOf(selectedMonth)
-                        if (index < months.lastIndex) dateViewModel.setSelectedMonth(months[index + 1])
+                        if (index < months.lastIndex) viewModel.setSelectedMonth(months[index + 1])
                     },
                     enabled = months.indexOf(selectedMonth) < months.lastIndex,
                     icon = ImageVector.vectorResource(R.drawable.arrow_back_24px))
@@ -343,7 +345,7 @@ fun DateTopBar(
                 MonthIconButton(
                     scrollMonths = {
                         val index = months.indexOf(selectedMonth)
-                        if (index > 0) dateViewModel.setSelectedMonth(months[index - 1])
+                        if (index > 0) viewModel.setSelectedMonth(months[index - 1])
                     },
                     enabled = months.indexOf(selectedMonth) > 0,
                     icon = ImageVector.vectorResource(R.drawable.arrow_forward_24px),
