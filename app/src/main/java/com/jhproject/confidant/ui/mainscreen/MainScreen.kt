@@ -148,6 +148,7 @@ fun MainScreen(
     windowSizeClass: WindowSizeClass,
     navigateToSearch: () -> Unit,
     openEntryCreationSheet: () -> Unit,
+    openEditEntry: () -> Unit,
     darkTheme: Boolean,
     mainScreenViewModel: MainScreenViewModel
 ) {
@@ -222,7 +223,11 @@ fun MainScreen(
                     .padding(paddingValues)
             ) {
                 composable(PrimaryAppScreen.ENTRIES.route) {
-                    EntryScreen(mainScreenViewModel = mainScreenViewModel, darkTheme = darkTheme)
+                    EntryScreen(
+                        mainScreenViewModel = mainScreenViewModel,
+                        openEditEntry = openEditEntry,
+                        darkTheme = darkTheme
+                    )
                 }
                 composable(PrimaryAppScreen.STATS.route) {
                     StatScreen()
@@ -315,7 +320,7 @@ fun DateTopBar(
 
     //Auto-selects month if null
     LaunchedEffect(months) {
-        dateViewModel.initSelectedMonth(months)
+        dateViewModel.displaySelectedMonth(months)
     }
 
     CenterAlignedTopAppBar(

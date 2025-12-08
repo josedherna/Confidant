@@ -13,6 +13,10 @@ class EntryRepository(
         return entryDao.getEntriesForMonth(startMillis, endMillis)
     }
 
+    suspend fun getEntry(id: Int): Entry? {
+        return entryDao.getEntry(id)
+    }
+
     suspend fun insertEntry(entry: Entry) {
         entryDao.insertEntry(entry)
     }

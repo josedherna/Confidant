@@ -94,6 +94,7 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun EntryScreen(
     darkTheme: Boolean = false,
+    openEditEntry: () -> Unit,
     mainScreenViewModel: MainScreenViewModel,
 ) {
     val background = if (darkTheme) MaterialTheme.colorScheme.surfaceContainerLowest else MaterialTheme.colorScheme.surfaceColorAtElevation(5.dp)
@@ -127,6 +128,7 @@ fun EntryScreen(
                     EntryCard(
                         data = item,
                         darkTheme = darkTheme,
+                        openEditEntry = openEditEntry,
                         viewModel = mainScreenViewModel
                     )
                 }
@@ -141,6 +143,7 @@ private val moodIcons = Mood.entries
 fun EntryCard(
     data: EntryCardData,
     darkTheme: Boolean,
+    openEditEntry: () -> Unit,
     viewModel: MainScreenViewModel
 ) {
     val mood = Mood.fromKey(data.mood)
@@ -203,6 +206,7 @@ fun EntryCard(
 
             EntryCardMenu(
                 cardID = data.id,
+                openEditEntry = openEditEntry,
                 viewModel = viewModel
             )
         }
@@ -249,6 +253,7 @@ fun DeleteDialog(
 @Composable
 fun EntryCardMenu(
     cardID: Int,
+    openEditEntry: () -> Unit,
     viewModel: MainScreenViewModel
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -257,6 +262,14 @@ fun EntryCardMenu(
     val menuIcon = rememberVectorPainter(ImageVector.vectorResource(R.drawable.more_horiz_24px))
     val editIcon = rememberVectorPainter(ImageVector.vectorResource(R.drawable.edit_24px))
     val deleteIcon = rememberVectorPainter(ImageVector.vectorResource(R.drawable.delete_24px))
+
+    LaunchedEffect(expanded) {
+        if (expanded) {
+            viewModel.getEntry(cardID)
+        }
+    }
+
+    val entry by viewModel.initEntry.collectAsState()
 
     Box {
         OutlinedIconButton(
@@ -293,7 +306,19 @@ fun EntryCardMenu(
                         color = MaterialTheme.colorScheme.onTertiaryContainer
                     )
                 },
-                onClick = { expanded = false }
+                onClick = {
+                    expanded = false
+
+                    entry?.let {
+                        viewModel.setEntryID(it.id)
+                        viewModel.setSelectedMoodCreationID(Mood.fromKey(it.mood).ordinal)
+                        viewModel.setSelectedDate(it.entryDate)
+                        viewModel.setSelectedTime(it.entryTime)
+                        viewModel.onTextFieldValueChange(it.notes)
+                    }
+
+                    openEditEntry()
+                }
             )
 
             DropdownMenuItem(
@@ -343,7 +368,7 @@ fun MoodButton(
 
     val color = if (darkTheme) mood.darkColor else mood.lightColor
 
-    val isSelected by viewModel.selectedMoodCreationID
+    val isSelected by viewModel.initSelectedMoodCreationID
         .map { it == id }
         .collectAsState(initial = false)
 
@@ -605,7 +630,7 @@ fun TimeField(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        // Build new time as millis
+                        //Builds new time as millis
                         val millis = localTimeToMillis(
                             selectedDateMillis = viewModel.selectedDateMillis ?: System.currentTimeMillis(),
                             hour = timePickerState.hour,
@@ -647,25 +672,25 @@ fun EntryNoteField(
     val text by mainScreenViewModel.textFieldValue.collectAsState()
     val label = stringResource(R.string.entry_note_prompt)
 
-        OutlinedTextField(
-            value = text,
-            onValueChange = { newValue ->
-                mainScreenViewModel.onTextFieldValueChange(newValue)
-            },
-            label = {
-                Text(
-                    text = label
-                )
-            },
-            keyboardOptions = KeyboardOptions(
-                imeAction = ImeAction.Done
-            ),
-            modifier = Modifier
-                .fillMaxWidth()
-                .onSizeChanged { size ->
-                    onHeightChanged(size.height)
-                }
-        )
+    OutlinedTextField(
+        value = text,
+        onValueChange = { newValue ->
+            mainScreenViewModel.onTextFieldValueChange(newValue)
+        },
+        label = {
+            Text(
+                text = label
+            )
+        },
+        keyboardOptions = KeyboardOptions(
+            imeAction = ImeAction.Done
+        ),
+        modifier = Modifier
+            .fillMaxWidth()
+            .onSizeChanged { size ->
+                onHeightChanged(size.height)
+            }
+    )
 }
 
 @Composable
@@ -694,19 +719,35 @@ fun SaveButton(
 ) {
     val saveButtonStyle = MaterialTheme.typography.headlineSmall
 
-    val selectedMoodId by viewModel.selectedMoodCreationID.collectAsState()
+    val selectedMoodId by viewModel.initSelectedMoodCreationID.collectAsState()
+    val selectedEntry by viewModel.initEntryID.collectAsState()
+
     val moodSelected = selectedMoodId != null
+    val entryIDSelected = selectedEntry != null
 
     Button(
         onClick = {
-            viewModel.saveEntry(
-                Entry(
-                    mood = viewModel.getMoodByID(viewModel.selectedMoodCreationID.value ?: 0).key,
-                    entryDate = viewModel.selectedDateMillis ?: 0,
-                    entryTime = viewModel.selectedTimeMillis ?: 0,
-                    notes = viewModel.textFieldValue.value
+            if (entryIDSelected) {
+                viewModel.updateEntry(
+                    Entry(
+                        id = viewModel.initEntryID.value ?: 0,
+                        mood = viewModel.getMoodByID(viewModel.initSelectedMoodCreationID.value ?: 0).key,
+                        entryDate = viewModel.selectedDateMillis ?: 0,
+                        entryTime = viewModel.selectedTimeMillis ?: 0,
+                        notes = viewModel.textFieldValue.value
+                    )
                 )
-            )
+            }
+            else {
+                viewModel.saveEntry(
+                    Entry(
+                        mood = viewModel.getMoodByID(viewModel.initSelectedMoodCreationID.value ?: 0).key,
+                        entryDate = viewModel.selectedDateMillis ?: 0,
+                        entryTime = viewModel.selectedTimeMillis ?: 0,
+                        notes = viewModel.textFieldValue.value
+                    )
+                )
+            }
             onDismissRequest()
         },
         enabled = moodSelected,

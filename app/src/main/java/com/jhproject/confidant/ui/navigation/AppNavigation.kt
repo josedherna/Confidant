@@ -55,6 +55,9 @@ fun AppNavigationHost(
     var showEntryCreationSheet by rememberSaveable { mutableStateOf(false) }
     val entryCreationSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
+    var showEntryEditSheet by rememberSaveable { mutableStateOf(false) }
+    val entryEditSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
     NavHost(
         navController = parentNavController,
         startDestination = AppScreen.MAIN_SCREEN.route
@@ -67,6 +70,7 @@ fun AppNavigationHost(
                 },
                 mainScreenViewModel = mainScreenViewModel,
                 openEntryCreationSheet = { showEntryCreationSheet = true },
+                openEditEntry = { showEntryEditSheet = true },
                 darkTheme = darkTheme
             )
         }
@@ -86,6 +90,7 @@ fun AppNavigationHost(
                     entryCreationSheetState.hide()
                     showEntryCreationSheet = false
                 }.invokeOnCompletion {
+                    mainScreenViewModel.setEntryID(null)
                     mainScreenViewModel.setSelectedDate(null)
                     mainScreenViewModel.setSelectedTime(null)
                     mainScreenViewModel.setSelectedMoodCreationID(null)
@@ -96,6 +101,26 @@ fun AppNavigationHost(
             mainScreenViewModel = mainScreenViewModel,
             darkTheme = darkTheme
         )
+    }
+
+    if (showEntryEditSheet) {
+        EntryCreationBottomSheet(
+            onDismissRequest = {
+                sheetScope.launch {
+                    entryEditSheetState.hide()
+                    showEntryEditSheet = false
+                }.invokeOnCompletion {
+                    mainScreenViewModel.setSelectedDate(null)
+                    mainScreenViewModel.setSelectedTime(null)
+                    mainScreenViewModel.setSelectedMoodCreationID(null)
+                    mainScreenViewModel.onTextFieldValueChange("")
+                }
+            },
+            sheetState = entryEditSheetState,
+            mainScreenViewModel = mainScreenViewModel,
+            darkTheme = darkTheme
+        )
+
     }
 }
 

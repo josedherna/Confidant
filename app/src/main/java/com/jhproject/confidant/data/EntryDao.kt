@@ -26,6 +26,9 @@ interface EntryDao {
     """)
     fun getEntriesForMonth(startMillis: Long, endMillis: Long): Flow<List<Entry>>
 
+    @Query("SELECT * FROM entries WHERE id = :id LIMIT 1")
+    suspend fun getEntry(id: Int): Entry?
+
     @Query("SELECT COUNT(*) FROM entries")
     fun countEntries(): Flow<Int>
 

@@ -32,14 +32,28 @@ class MainScreenViewModel(private val repository : EntryRepository) : ViewModel(
 
     val availableMonths: Flow<List<MonthYear>> = repository.getAvailableMonths()
 
+    //Keeps track on whether the months list has been initialized when app first opens
     private var initialized = false
 
     //Ensures that the selected month is initialized and survives configuration changes
-    fun initSelectedMonth(months: List<MonthYear>) {
+    fun displaySelectedMonth(months: List<MonthYear>) {
         if (!initialized) {
             selectedMonth.value = months.firstOrNull() ?: currentMonthYear()
             initialized = true
+            return
         }
+
+        if (months.isEmpty()) {
+            return
+        }
+
+        val current = selectedMonth.value
+
+        //If current is month still exists in database, do nothing
+        if (current != null && current in months) return
+
+        //If current is not in database, select next available month which is in the end of months list
+        selectedMonth.value = months.last()
     }
 
     fun setSelectedMonth(month: MonthYear) {
@@ -86,10 +100,35 @@ class MainScreenViewModel(private val repository : EntryRepository) : ViewModel(
                 emptyList()
             )
 
-    //Saves entry to the room db, as an entry entity
+    //Saves entry to the database, as an entry entity
     fun saveEntry(entry: Entry) {
         viewModelScope.launch {
             repository.insertEntry(entry)
+        }
+    }
+
+    //Gets an entry to be edited
+    private val entry = MutableStateFlow<Entry?>(null)
+    val initEntry: StateFlow<Entry?> = entry
+
+    //Used to update an entry in the database using its id
+    private val entryID = MutableStateFlow<Int?>(null)
+    val initEntryID: StateFlow<Int?> = entryID
+
+    fun setEntryID(id: Int?) {
+        entryID.value = id
+    }
+
+    fun getEntry(id: Int) {
+        viewModelScope.launch {
+            entry.value = repository.getEntry(id)
+        }
+    }
+
+    //Updates entry in the database based on the entry entity
+    fun updateEntry(entry: Entry) {
+        viewModelScope.launch {
+            repository.updateEntry(entry)
         }
     }
 
@@ -101,11 +140,11 @@ class MainScreenViewModel(private val repository : EntryRepository) : ViewModel(
     }
 
     //Flow that stores a users selection for mood
-    private val _selectedMoodCreationId = MutableStateFlow<Int?>(null)
-    val selectedMoodCreationID: StateFlow<Int?> = _selectedMoodCreationId.asStateFlow()
+    private val selectedMoodCreationId = MutableStateFlow<Int?>(null)
+    val initSelectedMoodCreationID: StateFlow<Int?> = selectedMoodCreationId.asStateFlow()
 
     fun setSelectedMoodCreationID(id: Int?) {
-        _selectedMoodCreationId.value = id
+        selectedMoodCreationId.value = id
     }
 
     fun getMoodByID(id: Int): Mood {

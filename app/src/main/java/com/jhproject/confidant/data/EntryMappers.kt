@@ -18,7 +18,7 @@ fun Entry.toCardData(): EntryCardData {
         .atZone(ZoneId.systemDefault())
         .toLocalTime()
 
-    val formattedTime = time.format(DateTimeFormatter.ofPattern("hh:mm a"))
+    val formattedTime = time.format(DateTimeFormatter.ofPattern("h:mm a"))
 
     //EntryCardData will be used to create entry cards
     return EntryCardData(
