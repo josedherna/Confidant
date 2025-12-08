@@ -11,7 +11,7 @@ val GreatLight = Color(0xFF359E43)
 
 val GoodLight = Color(0xFF359E9A)
 
-val MehLight = Color(0xFF523838)
+val MehLight = Color(0xFF4B3F3F)
 
 val BadLight = Color(0xFF78359E)
 
@@ -26,7 +26,7 @@ val GreatDark = Color(0xFF61CA6F)
 
 val GoodDark = Color(0xFF61CAC6)
 
-val MehDark = Color(0xFFC7ADAD)
+val MehDark = Color(0xFFC0B4B4)
 
 val BadDark = Color(0xFFA461CA)
 
