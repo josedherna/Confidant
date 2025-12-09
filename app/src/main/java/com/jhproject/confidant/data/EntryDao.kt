@@ -41,7 +41,10 @@ interface EntryDao {
     suspend fun getEntry(id: Int): Entry?
 
     @Query("SELECT COUNT(*) FROM entries")
-    fun countEntries(): Flow<Int>
+    fun getLifetimeEntriesCount(): Flow<Int>
+
+    @Query("SELECT COUNT(*) FROM entries WHERE entry_date >= :startMillis AND entry_date < :endMillis")
+    fun getMonthlyEntriesCount(startMillis: Long, endMillis: Long): Flow<Int>
 
     @Insert
     suspend fun insertEntry(entry: Entry)

@@ -46,6 +46,14 @@ fun StatScreen(
     val background = if (darkTheme) MaterialTheme.colorScheme.surfaceContainerLowest else MaterialTheme.colorScheme.surfaceColorAtElevation(5.dp)
     val listState = rememberLazyListState()
 
+    val mostCommonMood by viewModel.mostCommonMood.collectAsState(null)
+    val monthlyEntryCount by viewModel.monthlyEntryCount.collectAsState(null)
+    val lifetimeEntryCount by viewModel.lifetimeEntryCount.collectAsState(null)
+
+    val statsReady = mostCommonMood != null &&
+                monthlyEntryCount != null &&
+                lifetimeEntryCount != null
+
     Surface(
         color = background,
         modifier = Modifier.fillMaxSize()
@@ -63,11 +71,25 @@ fun StatScreen(
                         WindowInsetsSides.Horizontal)
                 )
         ) {
-            item {
-                CommonMoodCard(
-                    darkTheme = darkTheme,
-                    viewModel = viewModel
-                )
+            if (statsReady) {
+                item {
+                    CommonMoodCard(
+                        darkTheme = darkTheme,
+                        mostCommonMood = mostCommonMood
+                    )
+                }
+                item {
+                    MonthlyEntryCount(
+                        darkTheme = darkTheme,
+                        monthlyEntryCount = monthlyEntryCount
+                    )
+                }
+                item {
+                    LifetimeEntryCount(
+                        darkTheme = darkTheme,
+                        lifetimeEntryCount = lifetimeEntryCount
+                    )
+                }
             }
         }
     }
@@ -76,9 +98,8 @@ fun StatScreen(
 @Composable
 fun CommonMoodCard(
     darkTheme: Boolean,
-    viewModel: MainScreenViewModel
+    mostCommonMood: String?
 ) {
-    val mostCommonMood by viewModel.mostCommonMood.collectAsState(null)
     val mood = Mood.fromKey(mostCommonMood ?: "meh")
 
     val titleStyle = MaterialTheme.typography.headlineSmall
@@ -95,7 +116,7 @@ fun CommonMoodCard(
         modifier = Modifier.widthIn(max = 600.dp)
     ) {
         Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
+            horizontalAlignment = Alignment.Start,
             modifier = Modifier
                 .padding(15.dp)
                 .fillMaxWidth()
@@ -133,6 +154,8 @@ fun CommonMoodCard(
 
 @Composable
 fun MoodCountCard() {
+    val titleStyle = MaterialTheme.typography.headlineSmall
+
     OutlinedCard(
 
     ) {
@@ -141,6 +164,98 @@ fun MoodCountCard() {
 }
 
 @Composable
-fun LifetimeEntryCount() {
+fun MonthlyEntryCount(
+    darkTheme: Boolean,
+    monthlyEntryCount: Int?
+) {
+    val titleStyle = MaterialTheme.typography.headlineSmall
+    val entryLabelStyle = MaterialTheme.typography.headlineLarge
+    val entryLabel = if (monthlyEntryCount != 1) stringResource(R.string.entries_label) else stringResource(R.string.one_entry_label)
 
+
+    OutlinedCard(
+        colors = CardDefaults.outlinedCardColors(
+            containerColor = if (darkTheme) MaterialTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.surface
+        ),
+        modifier = Modifier
+            .widthIn(max = 600.dp)
+    ) {
+        Column(
+            horizontalAlignment = Alignment.Start,
+            modifier = Modifier
+                .padding(15.dp)
+                .fillMaxWidth()
+        ) {
+            Text(
+                text = stringResource(R.string.monthly_label),
+                style = titleStyle,
+                fontWeight = FontWeight.Bold
+            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Text(
+                    text = monthlyEntryCount.toString(),
+                    style = entryLabelStyle,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = entryLabel,
+                    style = entryLabelStyle,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun LifetimeEntryCount(
+    darkTheme: Boolean,
+    lifetimeEntryCount: Int?
+) {
+    val titleStyle = MaterialTheme.typography.headlineSmall
+    val entryLabelStyle = MaterialTheme.typography.headlineLarge
+    val entryLabel = if (lifetimeEntryCount != 1) stringResource(R.string.entries_label) else stringResource(R.string.one_entry_label)
+
+    OutlinedCard(
+        colors = CardDefaults.outlinedCardColors(
+            containerColor = if (darkTheme) MaterialTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.surface
+        ),
+        modifier = Modifier
+            .widthIn(max = 600.dp)
+    ) {
+        Column(
+            horizontalAlignment = Alignment.Start,
+            modifier = Modifier
+                .padding(15.dp)
+                .fillMaxWidth()
+        ) {
+            Text(
+                text = stringResource(R.string.lifetime_label),
+                style = titleStyle,
+                fontWeight = FontWeight.Bold
+            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Text(
+                    text = lifetimeEntryCount.toString(),
+                    style = entryLabelStyle,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = entryLabel,
+                    style = entryLabelStyle,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+    }
 }

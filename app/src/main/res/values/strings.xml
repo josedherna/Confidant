@@ -48,4 +48,9 @@
     <string name="not_available">N/A</string>
 
     <string name="stats_empty">Create entries for this month to see stats.</string>
+
+    <string name="lifetime_label">Lifetime Entries</string>
+    <string name="monthly_label">Monthly Entries</string>
+    <string name="one_entry_label">Entry Created</string>
+    <string name="entries_label">Entries Created</string>
 </resources>

@@ -17,6 +17,14 @@ class EntryRepository(
         return entryDao.getMostCommonMood(startMillis, endMillis)
     }
 
+    fun getLifetimeEntriesCount(): Flow<Int> {
+        return entryDao.getLifetimeEntriesCount()
+    }
+
+    fun getMonthlyEntriesCount(startMillis: Long, endMillis: Long): Flow<Int> {
+        return entryDao.getMonthlyEntriesCount(startMillis, endMillis)
+    }
+
     suspend fun getEntry(id: Int): Entry? {
         return entryDao.getEntry(id)
     }

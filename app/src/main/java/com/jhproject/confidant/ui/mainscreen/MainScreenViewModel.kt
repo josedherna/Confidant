@@ -111,6 +111,15 @@ class MainScreenViewModel(private val repository : EntryRepository) : ViewModel(
             SharingStarted.WhileSubscribed(5000),
             null
         )
+    val lifetimeEntryCount: Flow<Int> = repository.getLifetimeEntriesCount()
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val monthlyEntryCount: StateFlow<Int> = initSelectedMonth
+        .flatMapLatest { month ->
+            val (start, end) = monthRange(month ?: currentMonthYear())
+            repository.getMonthlyEntriesCount(start, end)
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
 
     //Saves entry to the database, as an entry entity
     fun saveEntry(entry: Entry) {
