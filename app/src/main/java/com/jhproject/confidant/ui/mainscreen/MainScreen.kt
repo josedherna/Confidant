@@ -10,11 +10,16 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -27,8 +32,10 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.OutlinedIconButton
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
@@ -39,7 +46,9 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -58,6 +67,7 @@ import com.jhproject.confidant.ui.entryscreen.EntryScreen
 import com.jhproject.confidant.ui.settingscreen.SettingScreen
 import com.jhproject.confidant.ui.statscreen.StatScreen
 import com.jhproject.confidant.R
+import com.jhproject.confidant.data.MonthYear
 
 //Defines the primary app screens
 enum class PrimaryAppScreen(val route: String, val title: Int, val icon: Int, val filledIcon: Int) {
@@ -141,6 +151,162 @@ private fun AppNavRailItem(
     )
 }
 
+@Composable
+fun EntryFab(
+    openEntryCreationSheet: () -> Unit
+) {
+    ExtendedFloatingActionButton(
+        onClick = openEntryCreationSheet,
+        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+        icon = {
+            Icon(
+                imageVector = ImageVector.vectorResource(R.drawable.add_24px),
+                contentDescription = stringResource(R.string.create_description)
+            )
+        },
+        text = {
+            Text(text = stringResource(R.string.new_entry))
+        },
+        modifier = Modifier.windowInsetsPadding(
+            WindowInsets.safeDrawing.only(
+                WindowInsetsSides.Horizontal
+            )
+        )
+    )
+}
+
+
+@Composable
+fun MonthLabel(
+    date: String,
+    viewModel: MainScreenViewModel
+) {
+    var showDialog by remember { mutableStateOf(false) }
+
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .clickable {
+                showDialog = true
+            }
+            .padding(15.dp)
+    ) {
+        Text(
+            text = date,
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Bold,
+        )
+    }
+
+    if (showDialog) {
+        MonthPickerDialog(
+            viewModel = viewModel,
+            onDismiss = { showDialog = false },
+            onConfirm = { selected ->
+                viewModel.setSelectedMonth(selected)
+                showDialog = false
+            }
+        )
+    }
+}
+
+@Composable
+fun MonthIconButton(
+    scrollMonths: () -> Unit,
+    enabled: Boolean,
+    icon: ImageVector
+) {
+    OutlinedIconButton(
+        onClick = scrollMonths,
+        enabled = enabled,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        colors = IconButtonDefaults.outlinedIconButtonColors(
+            contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+        ),
+        modifier = Modifier.size(32.dp),
+    ) {
+        Icon(
+            imageVector = icon, contentDescription = stringResource(R.string.month_seek)
+        )
+    }
+}
+
+@Composable
+fun SearchButton(navigateToSearch: () -> Unit) {
+    FilledIconButton(
+        onClick = navigateToSearch,
+        colors = IconButtonDefaults.filledIconButtonColors(
+            containerColor = MaterialTheme.colorScheme.primary,
+            contentColor = MaterialTheme.colorScheme.onPrimary,
+        ),
+        modifier = Modifier
+            .windowInsetsPadding(
+                WindowInsets.safeDrawing.only(
+                    WindowInsetsSides.Horizontal
+                )
+            )
+    ) {
+        Icon(
+            imageVector = ImageVector.vectorResource(R.drawable.search_24px),
+            contentDescription = stringResource(R.string.search_desc)
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun DateTopBar(
+    viewModel: MainScreenViewModel,
+    darkTheme: Boolean,
+    searchClicked: () -> Unit = { }
+) {
+    val backgroundTheme = if (darkTheme) {
+        MaterialTheme.colorScheme.surfaceContainerLowest
+    } else {
+        MaterialTheme.colorScheme.surfaceColorAtElevation(5.dp)
+    }
+
+    val months by viewModel.availableMonths.collectAsState(emptyList())
+    val selectedMonth by viewModel.initSelectedMonth.collectAsState()
+
+    //Auto-selects month if null
+    LaunchedEffect(months) {
+        viewModel.displaySelectedMonth(months)
+    }
+
+    CenterAlignedTopAppBar(
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = backgroundTheme
+        ),
+        title = {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(5.dp),
+            ) {
+                MonthIconButton(
+                    scrollMonths = {
+                        val index = months.indexOf(selectedMonth)
+                        if (index < months.lastIndex) viewModel.setSelectedMonth(months[index + 1])
+                    },
+                    enabled = months.indexOf(selectedMonth) < months.lastIndex,
+                    icon = ImageVector.vectorResource(R.drawable.arrow_back_24px)
+                )
+                MonthLabel(date = selectedMonth?.label() ?: "", viewModel = viewModel)
+                MonthIconButton(
+                    scrollMonths = {
+                        val index = months.indexOf(selectedMonth)
+                        if (index > 0) viewModel.setSelectedMonth(months[index - 1])
+                    },
+                    enabled = months.indexOf(selectedMonth) > 0,
+                    icon = ImageVector.vectorResource(R.drawable.arrow_forward_24px),
+                )
+            }
+        },
+        actions = {
+            SearchButton(searchClicked)
+        }
+    )
+}
 
 @OptIn(ExperimentalMaterial3WindowSizeClassApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -243,140 +409,63 @@ fun MainScreen(
 }
 
 @Composable
-fun MonthLabel(date: String) {
-    Box(
-        contentAlignment = Alignment.Center,
-        modifier = Modifier
-            .clickable {
-
-            }
-            .padding(15.dp)
-    ) {
-        Text(
-            text = date,
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold,
-        )
-    }
-}
-
-@Composable
-fun MonthIconButton(
-    scrollMonths: () -> Unit,
-    enabled: Boolean,
-    icon: ImageVector
-) {
-    OutlinedIconButton(
-        onClick = scrollMonths,
-        enabled = enabled,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-        colors = IconButtonDefaults.outlinedIconButtonColors(
-            contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-        ),
-        modifier = Modifier.size(32.dp),
-    ) {
-        Icon(
-            imageVector = icon, contentDescription = stringResource(R.string.month_seek)
-        )
-    }
-}
-
-@Composable
-fun SearchButton(navigateToSearch: () -> Unit) {
-    FilledIconButton(
-        onClick = navigateToSearch,
-        colors = IconButtonDefaults.filledIconButtonColors(
-            containerColor = MaterialTheme.colorScheme.primary,
-            contentColor = MaterialTheme.colorScheme.onPrimary,
-        ),
-        modifier = Modifier
-            .windowInsetsPadding(
-                WindowInsets.safeDrawing.only(
-                    WindowInsetsSides.Horizontal
-                )
-        )
-    ) {
-        Icon(
-            imageVector = ImageVector.vectorResource(R.drawable.search_24px),
-            contentDescription = stringResource(R.string.search_desc)
-        )
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun DateTopBar(
+fun MonthPickerDialog(
     viewModel: MainScreenViewModel,
-    darkTheme: Boolean,
-    searchClicked: () -> Unit = { }
+    onDismiss: () -> Unit,
+    onConfirm: (MonthYear) -> Unit
 ) {
-    val backgroundTheme = if (darkTheme) {
-        MaterialTheme.colorScheme.surfaceContainerLowest
-    }
-    else {
-        MaterialTheme.colorScheme.surfaceColorAtElevation(5.dp)
-    }
-
     val months by viewModel.availableMonths.collectAsState(emptyList())
-    val selectedMonth by viewModel.initSelectedMonth.collectAsState()
+    val currentSelection by viewModel.initSelectedMonth.collectAsState()
 
-    //Auto-selects month if null
-    LaunchedEffect(months) {
-        viewModel.displaySelectedMonth(months)
-    }
+    var tempSelection by remember { mutableStateOf(currentSelection) }
 
-    CenterAlignedTopAppBar(
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = backgroundTheme
-        ),
-        title = {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(5.dp),
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Select Month") },
+        text = {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 400.dp) // or use 0.6 * screen height
             ) {
-                MonthIconButton(
-                    scrollMonths = {
-                        val index = months.indexOf(selectedMonth)
-                        if (index < months.lastIndex) viewModel.setSelectedMonth(months[index + 1])
-                    },
-                    enabled = months.indexOf(selectedMonth) < months.lastIndex,
-                    icon = ImageVector.vectorResource(R.drawable.arrow_back_24px))
-                MonthLabel(selectedMonth?.label() ?: "")
-                MonthIconButton(
-                    scrollMonths = {
-                        val index = months.indexOf(selectedMonth)
-                        if (index > 0) viewModel.setSelectedMonth(months[index - 1])
-                    },
-                    enabled = months.indexOf(selectedMonth) > 0,
-                    icon = ImageVector.vectorResource(R.drawable.arrow_forward_24px),
-                )
+                LazyColumn(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    items(months) { month ->
+                        val isSelected = month == tempSelection
+                        val label = month.label()
+
+                        Row(
+                            Modifier
+                                .fillMaxWidth()
+                                .clickable { tempSelection = month }
+                                .padding(10.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(
+                                selected = isSelected,
+                                onClick = { tempSelection = month }
+                            )
+                            Text(
+                                text = label,
+                                style = MaterialTheme.typography.bodyLarge,
+                                modifier = Modifier.padding(start = 8.dp)
+                            )
+                        }
+                    }
+                }
             }
         },
-        actions = {
-            SearchButton(searchClicked)
+        confirmButton = {
+            TextButton(
+                enabled = tempSelection != null,
+                onClick = { tempSelection?.let(onConfirm) }
+            ) {
+                Text("Confirm")
+            }
+        },
+        dismissButton = {
+            TextButton(onDismiss) {
+                Text(text = stringResource(R.string.cancel_label))
+            }
         }
-    )
-}
-
-@Composable
-fun EntryFab(
-    openEntryCreationSheet: () -> Unit
-) {
-    ExtendedFloatingActionButton(
-        onClick = openEntryCreationSheet,
-        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-        icon = {
-            Icon(
-                imageVector = ImageVector.vectorResource(R.drawable.add_24px),
-                contentDescription = stringResource(R.string.create_description))
-        },
-        text = {
-            Text(text = stringResource(R.string.new_entry))
-        },
-        modifier = Modifier.windowInsetsPadding(
-                WindowInsets.safeDrawing.only(
-                    WindowInsetsSides.Horizontal
-                )
-            )
     )
 }
