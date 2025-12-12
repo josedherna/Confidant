@@ -28,6 +28,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -73,6 +74,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
@@ -93,15 +95,15 @@ import java.time.format.DateTimeFormatter
 @OptIn(ExperimentalCoroutinesApi::class)
 @Composable
 fun EntryScreen(
-    darkTheme: Boolean = false,
+    darkTheme: Boolean,
     openEditEntry: () -> Unit,
-    mainScreenViewModel: MainScreenViewModel,
+    viewModel: MainScreenViewModel,
 ) {
     val background = if (darkTheme) MaterialTheme.colorScheme.surfaceContainerLowest else MaterialTheme.colorScheme.surfaceColorAtElevation(5.dp)
 
     val listState = rememberLazyListState()
 
-    val entries by mainScreenViewModel.entryCards.collectAsState()
+    val entries by viewModel.entryCards.collectAsState()
 
     val isInitialLoad = entries.isEmpty()
 
@@ -129,7 +131,7 @@ fun EntryScreen(
                         data = item,
                         darkTheme = darkTheme,
                         openEditEntry = openEditEntry,
-                        viewModel = mainScreenViewModel
+                        viewModel = viewModel
                     )
                 }
             }
@@ -190,7 +192,7 @@ fun EntryCard(
                         color = color,
                         modifier = Modifier.alignByBaseline()
                     )
-                    Spacer(Modifier.width(8.dp))
+                    Spacer(Modifier.width(10.dp))
                     Text(
                         text = data.time,
                         style = timeStyle,
@@ -671,6 +673,7 @@ fun EntryNoteField(
 ) {
     val text by mainScreenViewModel.textFieldValue.collectAsState()
     val label = stringResource(R.string.entry_note_prompt)
+    val focusManager = LocalFocusManager.current
 
     OutlinedTextField(
         value = text,
@@ -684,6 +687,11 @@ fun EntryNoteField(
         },
         keyboardOptions = KeyboardOptions(
             imeAction = ImeAction.Done
+        ),
+        keyboardActions = KeyboardActions(
+            onDone = {
+                focusManager.clearFocus()
+            }
         ),
         modifier = Modifier
             .fillMaxWidth()

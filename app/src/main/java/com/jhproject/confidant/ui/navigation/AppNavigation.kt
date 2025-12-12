@@ -68,7 +68,7 @@ fun AppNavigationHost(
                 navigateToSearch = {
                     parentNavController.navigate(AppScreen.SEARCH_SCREEN.route)
                 },
-                mainScreenViewModel = mainScreenViewModel,
+                viewModel = mainScreenViewModel,
                 openEntryCreationSheet = { showEntryCreationSheet = true },
                 openEditEntry = { showEntryEditSheet = true },
                 darkTheme = darkTheme

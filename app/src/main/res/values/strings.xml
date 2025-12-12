@@ -37,10 +37,20 @@
     <string name="save_label">Save</string>
     <string name="save_description">Save Entry</string>
 
-    <string name="ok_label">Ok</string>
+    <string name="ok_label">OK</string>
 
     <string name="delete_title">Delete this entry?</string>
     <string name="delete_action">Delete</string>
     <string name="cancel_label">Cancel</string>
     <string name="delete_description">Your selected entry will be deleted from your journal. This action cannot be undone.</string>
+
+    <string name="common_mood_label">Most Common Mood</string>
+    <string name="not_available">N/A</string>
+
+    <string name="stats_empty">Create entries for this month to see stats.</string>
+
+    <string name="lifetime_label">Lifetime Entries</string>
+    <string name="monthly_label">Monthly Entries</string>
+    <string name="one_entry_label">Entry Created</string>
+    <string name="entries_label">Entries Created</string>
 </resources>

@@ -29,3 +29,8 @@ data class MonthYear(
         return "${Month.of(monthInt).name.lowercase().replaceFirstChar { it.uppercase() }} $year"
     }
 }
+
+data class MoodCount(
+    val mood: String,
+    val count: Int
+)
