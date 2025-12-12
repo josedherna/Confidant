@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.jhproject.confidant.data.Entry
 import com.jhproject.confidant.data.EntryRepository
 import com.jhproject.confidant.data.MonthYear
+import com.jhproject.confidant.data.MoodCount
 import com.jhproject.confidant.data.toCardData
 import com.jhproject.confidant.ui.entryscreen.EntryCardData
 import com.jhproject.confidant.ui.entryscreen.Mood
@@ -17,6 +18,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -195,4 +197,18 @@ class MainScreenViewModel(private val repository : EntryRepository) : ViewModel(
     fun setSelectedTime(millis: Long?) {
         selectedTimeMillis = millis
     }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val moodCounts: StateFlow<List<MoodCount>> =
+        initSelectedMonth
+            .filterNotNull()
+            .flatMapLatest { month ->
+                val (start, end) = monthRange(month)
+                repository.getMoodCountsForMonth(start, end)
+            }
+            .stateIn(
+                viewModelScope,
+                SharingStarted.WhileSubscribed(5000),
+                emptyList()
+            )
 }

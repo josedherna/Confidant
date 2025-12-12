@@ -25,6 +25,10 @@ class EntryRepository(
         return entryDao.getMonthlyEntriesCount(startMillis, endMillis)
     }
 
+    fun getMoodCountsForMonth(start: Long, end: Long): Flow<List<MoodCount>> {
+        return entryDao.getMoodCountsForMonth(start, end)
+    }
+
     suspend fun getEntry(id: Int): Entry? {
         return entryDao.getEntry(id)
     }

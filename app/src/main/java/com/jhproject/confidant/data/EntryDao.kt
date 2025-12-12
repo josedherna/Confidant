@@ -37,6 +37,19 @@ interface EntryDao {
     """)
     fun getMostCommonMood(startMillis: Long, endMillis: Long): Flow<String?>
 
+    @Query("""
+    SELECT mood, COUNT(*) AS count
+    FROM entries
+    WHERE entry_date >= :startMillis
+      AND entry_date < :endMillis
+    GROUP BY mood
+    ORDER BY count DESC
+""")
+    fun getMoodCountsForMonth(
+        startMillis: Long,
+        endMillis: Long
+    ): Flow<List<MoodCount>>
+
     @Query("SELECT * FROM entries WHERE id = :id LIMIT 1")
     suspend fun getEntry(id: Int): Entry?
 
