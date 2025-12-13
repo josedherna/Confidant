@@ -67,4 +67,17 @@ interface EntryDao {
 
     @Query("DELETE FROM entries WHERE id = :id")
     suspend fun deleteEntry(id: Int)
+
+    @Query("""
+    DELETE FROM entries
+    WHERE entry_date >= :startMillis
+      AND entry_date < :endMillis
+    """)
+    suspend fun deleteEntriesForMonth(
+        startMillis: Long,
+        endMillis: Long
+    )
+
+    @Query("DELETE FROM entries")
+    suspend fun deleteAllEntries()
 }

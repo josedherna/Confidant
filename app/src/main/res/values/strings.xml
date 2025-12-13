@@ -44,6 +44,17 @@
     <string name="cancel_label">Cancel</string>
     <string name="delete_description">Your selected entry will be deleted from your journal. This action cannot be undone.</string>
 
+    <string name="deletemonth_title">Delete this month?</string>
+    <string name="deletemonth_description">All entries in this month will be deleted from your journal. This action cannot be undone.</string>
+    <string name="deletemonth_itemtitle">Delete this month\'s entries</string>
+    <string name="deletemonth_itemsub">Deletes all entries in selected month from journal</string>
+
+    <string name="deleteall_title">Delete all entries?</string>
+    <string name="deleteall_description">Every entry will be deleted from your journal. This action cannot be undone.</string>
+    <string name="deleteall_itemtitle">Delete all entries</string>
+    <string name="deleteall_itemsub">Deletes all entries from journal</string>
+
+
     <string name="common_mood_label">Most Common Mood</string>
     <string name="not_available">N/A</string>
 

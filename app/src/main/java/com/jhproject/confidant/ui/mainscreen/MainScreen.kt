@@ -401,7 +401,10 @@ fun MainScreen(
                     )
                 }
                 composable(PrimaryAppScreen.SETTINGS.route) {
-                    SettingScreen()
+                    SettingScreen(
+                        darkTheme = darkTheme,
+                        viewModel = viewModel
+                    )
                 }
             }
         }

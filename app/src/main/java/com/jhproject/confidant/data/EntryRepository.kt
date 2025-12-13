@@ -44,4 +44,12 @@ class EntryRepository(
     suspend fun deleteEntry(id: Int) {
         entryDao.deleteEntry(id)
     }
+
+    suspend fun deleteEntriesForMonth(startMillis: Long, endMillis: Long) {
+        entryDao.deleteEntriesForMonth(startMillis, endMillis)
+    }
+
+    suspend fun deleteAllEntries() {
+        entryDao.deleteAllEntries()
+    }
 }

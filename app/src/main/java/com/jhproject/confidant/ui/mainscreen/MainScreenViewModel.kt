@@ -211,4 +211,19 @@ class MainScreenViewModel(private val repository : EntryRepository) : ViewModel(
                 SharingStarted.WhileSubscribed(5000),
                 emptyList()
             )
+
+    fun deleteCurrentMonthEntries() {
+        val month = selectedMonth.value ?: currentMonthYear()
+        val (start, end) = monthRange(month)
+
+        viewModelScope.launch {
+            repository.deleteEntriesForMonth(start, end)
+        }
+    }
+
+    fun deleteAllJournalEntries() {
+        viewModelScope.launch {
+            repository.deleteAllEntries()
+        }
+    }
 }
