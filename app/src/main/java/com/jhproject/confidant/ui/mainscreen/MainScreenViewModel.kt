@@ -13,13 +13,17 @@ import com.jhproject.confidant.data.toCardData
 import com.jhproject.confidant.ui.entryscreen.EntryCardData
 import com.jhproject.confidant.ui.entryscreen.Mood
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -147,6 +151,32 @@ class MainScreenViewModel(private val repository : EntryRepository) : ViewModel(
             entry.value = repository.getEntry(id)
         }
     }
+
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> = _searchQuery
+
+    fun setSearchQuery(query: String) {
+        _searchQuery.value = query
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
+    val searchResults: StateFlow<List<EntryCardData>> =
+        searchQuery
+            .debounce(300)
+            .distinctUntilChanged()
+            .flatMapLatest { query ->
+                if (query.isBlank()) {
+                    flowOf(emptyList())
+                } else {
+                    repository.searchEntries(query)
+                }
+            }
+            .map { entries -> entries.map { it.toCardData() } }
+            .stateIn(
+                viewModelScope,
+                SharingStarted.WhileSubscribed(5_000),
+                emptyList()
+            )
 
     //Updates entry in the database based on the entry entity
     fun updateEntry(entry: Entry) {

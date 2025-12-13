@@ -59,6 +59,15 @@ interface EntryDao {
     @Query("SELECT COUNT(*) FROM entries WHERE entry_date >= :startMillis AND entry_date < :endMillis")
     fun getMonthlyEntriesCount(startMillis: Long, endMillis: Long): Flow<Int>
 
+    @Query("""
+    SELECT *
+    FROM entries
+    WHERE notes LIKE '%' || :query || '%'
+       OR mood LIKE '%' || :query || '%'
+    ORDER BY entry_date DESC, entry_time DESC
+    """)
+    fun searchEntries(query: String): Flow<List<Entry>>
+
     @Insert
     suspend fun insertEntry(entry: Entry)
 

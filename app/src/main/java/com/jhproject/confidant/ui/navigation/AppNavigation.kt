@@ -27,7 +27,7 @@ import com.jhproject.confidant.R
 import com.jhproject.confidant.data.EntryViewModelFactory
 import com.jhproject.confidant.ui.entryscreen.EntryCreationBottomSheet
 import com.jhproject.confidant.ui.mainscreen.MainScreenViewModel
-import com.jhproject.confidant.ui.searchscreen.SearchStartScreen
+import com.jhproject.confidant.ui.searchscreen.SearchScreen
 import kotlinx.coroutines.launch
 
 enum class AppScreen(val route: String) {
@@ -76,9 +76,11 @@ fun AppNavigationHost(
         }
 
         composable(AppScreen.SEARCH_SCREEN.route) {
-            SearchStartScreen(
+            SearchScreen(
                 darkTheme = darkTheme,
-                backClicked = { parentNavController.navigateUp() }
+                viewModel = mainScreenViewModel,
+                openEditEntry = { showEntryEditSheet = true },
+                onBack = { parentNavController.navigateUp() }
             )
         }
     }
@@ -122,29 +124,4 @@ fun AppNavigationHost(
         )
 
     }
-}
-
-@OptIn(ExperimentalMaterial3Api::class,)
-@Composable
-fun TopBar(
-    onUpClicked: () -> Unit = {},
-    title: String
-) {
-    TopAppBar(
-        title = {
-            Text(
-                text = title
-            )
-        },
-        navigationIcon = {
-            IconButton(
-                onClick = onUpClicked
-            ) {
-                Icon(
-                    imageVector = ImageVector.vectorResource(R.drawable.arrow_back_24px),
-                    contentDescription = stringResource(R.string.back)
-                )
-            }
-        }
-    )
 }
